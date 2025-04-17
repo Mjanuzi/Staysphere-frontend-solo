@@ -12,7 +12,7 @@ Frontend part of our booking project
 ---
 
 ## **Tech Stack** 
-- **Frontend**: React, [Add: Redux/Tailwind CSS if used]
+- **Frontend**: React, [TBD]
 - **Backend**: Node.js
 - **Tools**: Prettier, Git (more to be decided)
 
