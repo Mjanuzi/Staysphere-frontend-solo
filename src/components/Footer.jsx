@@ -49,13 +49,26 @@ const Footer = () => {
           </svg>
         </div>
       </Link>
-      {/**Link to profile page */} 
-        
-
-
-
-
-      {/**Link to login */}
+      {/**Link to profile page/login page when or when not logged on */}
+      {currentUser ? (
+        <Link to="/profile" className={`nav-item ${isActive("/profile") ? "active" : ""}`}>
+            <div className="nav-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+            <path d="M12 2.25A4.5 4.5 0 0 0 7.5 6.75v1.5a4.5 4.5 0 0 0 9 0v-1.5A4.5 4.5 0 0 0 12 2.25zm-1.5 12h3a6 6 0 0 1 6 6v.75h-15v-.75a6 6 0 0 1 6-6z" />
+            </svg>
+            </div>
+            <span className="nav-label">Profile</span>
+        </Link>
+      ) : (
+        <Link to="/login" className={`nav-item ${isActive("/login") ? "active" : ""}`}>
+            <div className="nav-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+            <path d="M12 3.75a6 6 0 0 0-6 6v2.25h4.5v-2.25a1.5 1.5 0 0 1 3 0v2.25h4.5v-2.25a6 6 0 0 0-6-6zm-7.5 12v4.5h15v-4.5h-15z" />
+            </svg>
+            </div>
+            <span className="nav-label">Login</span>
+        </Link>
+    )}
     </nav>
   );
 };
