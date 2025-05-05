@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
               </Route>
             </Routes>
           </main>
+          <Footer></Footer>
         </div>
       </AuthProvider>
     </BrowserRouter>
