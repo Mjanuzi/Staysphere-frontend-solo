@@ -48,6 +48,7 @@ const Footer = () => {
             <path d="M10.5 3.75a6.75 6.75 0 1 0 0 13.5 6.75 6.75 0 0 0 0-13.5zm0 18a11.25 11.25 0 1 1 0-22.5 11.25 11.25 0 0 1 0 22.5zm-1.5-3.75h3v-7.5h-3v7.5z" />
           </svg>
         </div>
+        <span className="nav-label">Listings</span>
       </Link>
       {/**Link to profile page/login page when or when not logged on */}
       {currentUser ? (
