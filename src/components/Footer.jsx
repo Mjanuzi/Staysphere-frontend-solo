@@ -17,6 +17,8 @@ const Footer = () => {
 
   return (
     <nav className="footer-nav">
+
+        /**Link to home page */
       <Link to="/" className={`nav-item ${isActive("/") ? "active" : ""}`}>
         <div className="nav-icon">
           <svg
@@ -31,6 +33,15 @@ const Footer = () => {
         </div>
         <span className="nav-label">Home</span>
       </Link>
+
+      /**Link to listings */
+
+
+
+
+      /**Link to profile page */
+
+      /**Link to login */
     </nav>
   );
 };
