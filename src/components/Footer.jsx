@@ -17,8 +17,7 @@ const Footer = () => {
 
   return (
     <nav className="footer-nav">
-
-        /**Link to home page */
+      /**Link to home page */
       <Link to="/" className={`nav-item ${isActive("/") ? "active" : ""}`}>
         <div className="nav-icon">
           <svg
@@ -33,15 +32,30 @@ const Footer = () => {
         </div>
         <span className="nav-label">Home</span>
       </Link>
+      {/**Link to listings */}
+      <Link
+        to="/listings"
+        className={`nav-item ${isActive("/listings") ? "active" : ""}`}
+      >
+        <div className="nav-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            width="24"
+            height="24"
+          >
+            <path d="M10.5 3.75a6.75 6.75 0 1 0 0 13.5 6.75 6.75 0 0 0 0-13.5zm0 18a11.25 11.25 0 1 1 0-22.5 11.25 11.25 0 0 1 0 22.5zm-1.5-3.75h3v-7.5h-3v7.5z" />
+          </svg>
+        </div>
+      </Link>
+      {/**Link to profile page */} 
+        
 
-      /**Link to listings */
 
 
 
-
-      /**Link to profile page */
-
-      /**Link to login */
+      {/**Link to login */}
     </nav>
   );
 };
