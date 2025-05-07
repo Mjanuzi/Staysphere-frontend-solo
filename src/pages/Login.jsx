@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import "./Login.css";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -34,17 +35,29 @@ const Login = () => {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            required
           />
         </div>
         <div className="form-group">
           <label htmlFor="password">Password</label>
           <input
             type="password"
+            id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
         </div>
-        <button type="submit">Login</button>
+        <div className="form-actions">
+          <button type="submit" className="login-button">
+            Login
+          </button>
+          <Link to="/register" className="register-link">
+            <button type="button" className="register-button">
+              Register New Account
+            </button>
+          </Link>
+        </div>
       </form>
     </div>
   );
