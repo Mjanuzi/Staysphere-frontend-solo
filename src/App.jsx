@@ -8,14 +8,13 @@ import Unauthorized from "./pages/Unauthorized";
 import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 import Footer from "./components/Footer";
+import Layout from "./components/layout/Layout";
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <div className="app">
-          Header
-          <main className="main-content">
+        <Layout>
             <Routes>
               {/* public routes */}
               <Route path="/" element={<Home />} />
@@ -33,9 +32,7 @@ function App() {
                 <Route path="/admin" element={<AdminDashboard />} />
               </Route>
             </Routes>
-          </main>
-        </div>
-        <Footer></Footer>
+        </Layout>
       </AuthProvider>
     </BrowserRouter>
   );
