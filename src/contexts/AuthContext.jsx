@@ -1,5 +1,7 @@
-import { createContext, useState, useEffect } from "react";
-import api from "../api/axios";
+import { createContext, useReducer, useEffect } from "react";
+import authReducer from "./authReducer";
+import * as actions from "./authActions";
+import axios from "../../api/axios";
 
 /**
  * Den här modulen tillhandahåller hantering av auth state för hela applikationen.
@@ -10,7 +12,15 @@ import api from "../api/axios";
  * som kan konsumeras av vilken komponent som helst i applikationen.
  */
 
-export const AuthContext = createContext();
+const initialState = {
+  currentUser: null,
+  userId: null,
+  loading: true,
+  error: null,
+};
+
+export const AuthContext = createContext(initialState);
+
 
 /**
  * AuthProvider Component
@@ -22,117 +32,108 @@ export const AuthContext = createContext();
  * @param {React.ReactNode} props.children - Child components that will have access to auth context
  */
 export const AuthProvider = ({ children }) => {
-  // lagra authenticated user data
-  const [currentUser, setCurrentUser] = useState(null);
-  // hålla koll på loading state medans vi kollar auth status
-  const [loading, setLoading] = useState(true);
+  const [state, dispatch] = useReducer(authReducer, initialState);
 
-  /**
-   * kontrollera autentiseringsstatus när appen initieras
-   * detta säkerställer att användarsessionen finns kvar vid re-render av sidor
-   */
+  // Check if the user is already authenticated on component mount
   useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        if (token) {
+          // Set token in axios headers
+          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+          // Fetch current user details
+          const response = await axios.get("/api/users/me");
+
+          dispatch({
+            type: "AUTH_SUCCESS",
+            payload: {
+              user: response.data,
+              userId: response.data.id,
+            },
+          });
+        } else {
+          dispatch({ type: "AUTH_RESET" });
+        }
+      } catch (error) {
+        console.error("Authentication check failed:", error);
+        localStorage.removeItem("token");
+        dispatch({ type: "AUTH_ERROR", payload: "Session expired" });
+      } finally {
+        dispatch({ type: "AUTH_LOADED" });
+      }
+    };
+
     checkAuthStatus();
   }, []);
 
-  /**
-   * verifierar om användaren har en giltig autentiseringssession
-   * genom att kontrollera JWT-token som lagras i HTTP-only cookies
-   */
+  // Method to login a user
+  const login = async (username, password) => {
+    return actions.login(username, password, dispatch);
+  };
+
+  // Method to register a new user
+  const register = async (userData) => {
+    return actions.register(userData, dispatch);
+  };
+
+  // Method to logout the user
+  const logout = () => {
+    actions.logout(dispatch);
+  };
+
+  // Method to check auth status
   const checkAuthStatus = async () => {
     try {
-      // kalla på backend end point som validerar JWT
-      const response = await api.get("/auth/check");
-      // om success => uppdatera state med returnerad user
-      setCurrentUser(response.data);
+      dispatch({ type: "AUTH_LOADING" });
+      const token = localStorage.getItem("token");
+
+      if (token) {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        const response = await axios.get("/api/users/me");
+
+        dispatch({
+          type: "AUTH_SUCCESS",
+          payload: {
+            user: response.data,
+            userId: response.data.id,
+          },
+        });
+      } else {
+        dispatch({ type: "AUTH_RESET" });
+      }
+
+      dispatch({ type: "AUTH_LOADED" });
     } catch (error) {
-      // om token är invalid eller expired => cleara user state
-      setCurrentUser(null);
-      console.log("Authentication check failed:", error.message);
-    } finally {
-      // uppdatera loading state för att rendera appen
-      setLoading(false);
+      console.error("Authentication check failed:", error);
+      localStorage.removeItem("token");
+      dispatch({ type: "AUTH_ERROR", payload: "Session expired" });
+      dispatch({ type: "AUTH_LOADED" });
     }
   };
 
-  /**
-   * Authenticates user with provided credentials
-   *
-   * @param {string} username - User's username
-   * @param {string} password - User's password
-   * @returns {Object} User data if login successful
-   * @throws {Error} If login fails
-   */
-  const login = async (username, password) => {
-    try {
-      const response = await api.post("/auth/login", { username, password });
-      // backend sätter JWT i HTTP-only cookie automatiskt
-      // uppdatera user state med returnerad data
-      setCurrentUser(response.data);
-      console.log("Response: " + JSON.stringify(response.data));
-      return response.data;
-    } catch (error) {
-      console.error("Login error:", error.response?.data || error.message);
-    }
-  };
-
-  /**
-   * Registers a new user
-   *
-   * @param {string} username - Desired username
-   * @param {string} password - User's password (must meet security requirements)
-   * @param {Array} roles - Optional roles for the user
-   * @returns {Object} Registration response data
-   * @throws {Error} If registration fails
-   */
-  const register = async (username, password, email, age, country) => {
-    try {
-      const registerResponse = await api.post("/auth/register", {
-        username,
-        password,
-        email,
-        age,
-        country,
-      });
-
-      const loginResponse = await login(username, password);
-      return loginResponse;
-    } catch (error) {
-      console.error("Register error:", error.response?.data || error.message);
-      throw error;
-    }
-  };
-
-  /**
-   * loggar ut den aktuella användaren genom att:
-   * 1. anropa backend logout end point som ogiltigförklarar JWT-cookien
-   * 2. rensa användarstatus från applikationen
-   */
-  const logout = async () => {
-    try {
-      await api.post("/auth/logout");
-      // cleara user från state
-      setCurrentUser(null);
-    } catch (error) {
-      console.error("Logout error:", error.response?.data || error.message);
-      // tvinga utloggning på frontend även om backend misslyckas
-      setCurrentUser(null);
-    }
-  };
-
-  // skapa context value object med alla auth-relaterade data och metoder
-  const value = {
-    currentUser,
-    login,
-    logout,
-    register,
-    checkAuthStatus,
+  // Method to clear any auth errors
+  const clearError = () => {
+    dispatch({ type: "CLEAR_ERROR" });
   };
 
   return (
-    <AuthContext.Provider value={value}>
-      {/* rendera children endast efter att den första autentiseringskontrollen är klar */}
-      {!loading && children}
+    <AuthContext.Provider
+      value={{
+        currentUser: state.currentUser,
+        userId: state.userId,
+        loading: state.loading,
+        error: state.error,
+        login,
+        register,
+        logout,
+        checkAuthStatus,
+        clearError,
+      }}
+    >
+      {children}
     </AuthContext.Provider>
   );
 };
