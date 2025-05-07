@@ -7,7 +7,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
-import Footer from "./components/Footer";
 import Layout from "./components/layout/Layout";
 
 function App() {
