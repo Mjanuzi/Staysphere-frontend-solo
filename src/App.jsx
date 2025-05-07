@@ -6,7 +6,7 @@ import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
 import AdminDashboard from "./pages/AdminDashboard";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/auth/AuthContext";
 import Layout from "./components/layout/Layout";
 
 function App() {
@@ -14,23 +14,34 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Layout>
-            <Routes>
-              {/* public routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/unauthorized" element={<Unauthorized />} />
+          <Routes>
+            {/* public routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="/listings" element={<Listings />} />
+            <Route path="/listings/:listingId" element={<ListingDetail />} />
 
-              {/* protected routes for all authenticated users */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/profile" element={<Profile />} />
-              </Route>
+            {/* protected routes for all authenticated users */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/create-listing" element={<CreateListing />} />
+              <Route
+                path="/update-listing/:listingId"
+                element={<UpdateListing />}
+              />
+              <Route
+                path="/add-availability/:listingId"
+                element={<AddAvailability />}
+              />
+            </Route>
 
-              {/* protected routes for admins only */}
-              <Route element={<ProtectedRoute requiredRoles={["ADMIN"]} />}>
-                <Route path="/admin" element={<AdminDashboard />} />
-              </Route>
-            </Routes>
+            {/* protected routes for admins only */}
+            <Route element={<ProtectedRoute requiredRoles={["ADMIN"]} />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
+          </Routes>
         </Layout>
       </AuthProvider>
     </BrowserRouter>
