@@ -48,7 +48,11 @@ const Login = () => {
             required
           />
         </div>
-        <button type="submit">Login</button>
+        <div className="form-actions">
+          <button type="submit" className="login-button">
+            Login
+          </button>
+        </div>
       </form>
     </div>
   );
