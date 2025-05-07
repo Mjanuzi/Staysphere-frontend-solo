@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import "../components/components.css/Footer.css";
+import "../components/layout/Footer.css";
 
 /**Footer component to the bottom of the screen for mobile
  *
@@ -17,7 +17,7 @@ const Footer = () => {
 
   return (
     <nav className="footer-nav">
-      /**Link to home page */
+      {/**Link to home page */}
       <Link to="/" className={`nav-item ${isActive("/") ? "active" : ""}`}>
         <div className="nav-icon">
           <svg
