@@ -1,0 +1,40 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+  
+body {
+    font-family: verdana, Geneva, Tahoma, sans-serif;
+    line-height: 1.6;
+    font-size: 18px;
+}
+
+.layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .main-content {
+    flex: 1;
+    padding: 0;
+    margin-bottom: 5rem; /* Space for mobile footer navigation */
+  }
+  
+  /* Tablet and larger screens */
+  @media (min-width: 768px) {
+    .main-content {
+      padding: 0 1rem;
+      margin-bottom: 0;
+    }
+  }
+  
+  /* Desktop screens */
+  @media (min-width: 1024px) {
+    .main-content {
+      padding: 0 2rem;
+      max-width: 1200px;
+      margin: 0 auto; /* Center content on larger screens */
+    }
+  }

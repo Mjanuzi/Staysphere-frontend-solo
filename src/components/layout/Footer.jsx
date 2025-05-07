@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import "../components/layout/Footer.css";
+import "./Footer.css";
 
 /**Footer component to the bottom of the screen for mobile
  *
