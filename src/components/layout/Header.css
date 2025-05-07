@@ -1,0 +1,192 @@
+/* 
+ * Header CSS
+ * 
+ * Styles for the header component including search bar and filter categories.
+ * Mobile-first with responsive enhancements for larger screens.
+ */
+
+ .header-container {
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: #ffffff;
+  }
+  
+  /* Search bar styling */
+  .search-container {
+    width: 100%;
+  }
+  
+  .search-input-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    background-color: #f5f5f5;
+    border-radius: 24px;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+    border: 1px solid #e0e0e0;
+  }
+  
+  .search-input-wrapper:focus-within {
+    border-color: #aaa;
+  }
+  
+  .search-icon {
+    color: #333;
+    margin-right: 0.5rem;
+  }
+  
+  .search-input {
+    border: none;
+    background: transparent;
+    flex: 1;
+    outline: none;
+    font-size: 14px;
+    width: 100%;
+    color: #333;
+  }
+  
+  .search-input::placeholder {
+    color: #666;
+  }
+  
+  /* Filters section styling */
+  .filters-container {
+    width: 100%;
+    margin: 0 auto;
+  }
+  
+  .filters-scroll {
+    display: flex;
+    justify-content: space-between;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    padding-top: 0.25rem;
+    -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+  
+  .filters-scroll::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome/Safari */
+  }
+  
+  .filter-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    width: 60px;
+  }
+  
+  .filter-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.25rem;
+    color: #333;
+  }
+  
+  .filter-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .filter-label {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    color: #333;
+    text-align: center;
+  }
+  
+  .filter-button.active .filter-icon {
+    background-color: #f5f5f5;
+    border-radius: 50%;
+    border: 1px solid #e0e0e0;
+  }
+  
+  /* Status bar styling */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    color: #333;
+    background-color: #ffffff;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  
+  .status-time {
+    font-weight: bold;
+  }
+  
+  .status-icons {
+    display: flex;
+    gap: 0.25rem;
+  }
+  
+  /* Tablet breakpoint (768px) */
+  @media (min-width: 768px) {
+    .header-container {
+      padding: 1.5rem;
+      gap: 1.5rem;
+    }
+  
+    .search-input-wrapper {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+  
+    .filters-container {
+      display: flex;
+      justify-content: center;
+    }
+  
+    .filters-scroll {
+      justify-content: center;
+      gap: 2rem;
+      max-width: none;
+    }
+  }
+  
+  /* Desktop breakpoint (1024px) */
+  @media (min-width: 1024px) {
+    .header-container {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+    }
+  
+    .search-container {
+      flex: 1;
+      max-width: 500px;
+    }
+  
+    .filters-container {
+      flex: 1;
+      justify-content: flex-end;
+    }
+  
+    .filters-scroll {
+      width: auto;
+      justify-content: flex-end;
+      padding-bottom: 0;
+      gap: 2rem;
+    }
+  }
