@@ -1,40 +1,32 @@
 import axios from "axios";
 
-// Create axios instance with base URL
-const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080",
+/**
+ * Konfigurerad Axios-instans för API requests
+ *
+ * Den här modulen exporterar en förkonfigurerad Axios-instans för att göra HTTP-requests
+ * till vårt backend-API. Konfigurationen ser till att:
+ *
+ * 1. Alla requests riktas till korrekt API-bas-URL
+ * 2. Inloggningsuppgifter (cookies) ingår i varje request
+ * 3. Korrekt headers är inställda
+ *
+ * Att använda denna förkonfigurerade instans hjälper till att upprätthålla konsistens överallt
+ * alla API-förfrågningar i applikationen och centraliserar konfigurationen.
+ */
+
+/**
+ * Configured Axios instance
+ *
+ * @property {string} baseURL - Base URL for all API requests
+ * @property {boolean} withCredentials - Ensures cookies are sent with requests
+ * @property {Object} headers - Default headers for all requests
+ */
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL, // vår URL till API:et
+  withCredentials: true, // super duper viktig cookie-based authentication
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Add request interceptor for authentication
-instance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Add response interceptor for error handling
-instance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      // Unauthorized - clear the token and redirect to login
-      localStorage.removeItem("token");
-      window.location.href = "/login";
-    }
-    return Promise.reject(error);
-  }
-);
-
-export default instance;
+export default api;

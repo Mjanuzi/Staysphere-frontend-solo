@@ -1,8 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useListings } from "../hooks/useListings";
+//import { useListings } from "../hooks/useListings";
 import "./Home.css";
-
 
 const Home = () => {
   const navigate = useNavigate();
@@ -117,4 +116,3 @@ const Home = () => {
 };
 
 export default Home;
-// Varför FUNKAR DE INTE
