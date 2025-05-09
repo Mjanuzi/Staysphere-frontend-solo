@@ -2,10 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Unauthorized from "./pages/Unauthorized";
-import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "./contexts/auth/AuthContext";
 import Layout from "./components/layout/Layout";
 
