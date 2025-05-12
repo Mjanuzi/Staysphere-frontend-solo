@@ -9,6 +9,15 @@ import { useListings } from "../hooks/useListings";
 const Listings = () => {
     const navigate = useNavigate();
     //Using the listings hook
-    const {Listings, loading, error, fetchListings} = useListings(true);
+    const {listings, loading, error, fetchListings} = useListings(true);
 }
+
+ // Helper function to generate image URL based on the listing
+ const getImageUrl = (listing) => {
+
+
+    if (!listing){
+        return "/src/assets/no-img-pic.png"
+    }
+ }
 
