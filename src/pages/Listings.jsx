@@ -21,3 +21,10 @@ const Listings = () => {
     }
  }
 
+ //When refreshing the page, fetching all listings
+ const handleRefresh = () => {
+    fetchListings();
+ }
+ 
+
+
