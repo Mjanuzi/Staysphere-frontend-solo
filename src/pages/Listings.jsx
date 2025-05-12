@@ -25,6 +25,16 @@ const Listings = () => {
  const handleRefresh = () => {
     fetchListings();
  }
- 
+
+
+ //navigate to detail - when listingDetail is done
+ const navigateToDetail =(listingId) => {
+    navigate(`/listings/${listingId}`)
+ }
+
+ //while loading
+ if (loading){
+    return <div>Loading listings...</div>
+ }
 
 
