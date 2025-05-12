@@ -34,7 +34,7 @@ const Listings = () => {
 
  //while loading
  if (loading){
-    return <div>Loading listings...</div>
+    return <div className="loading-state">Loading listings...</div>
  }
 
 
