@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useListings } from "../hooks/useListings";
+import { usePaginatedListings } from "../hooks/usePaginatedListings";
+import InfiniteScroll from "react-infinite-scroll-component";
 import "./Listings.css";
 
 /**Listing page
@@ -10,7 +11,7 @@ import "./Listings.css";
 const Listings = () => {
   const navigate = useNavigate();
   //Using the listings hook
-  const { listings, loading, error, fetchListings } = useListings(true);
+  const { listings, loading, hasMore, loadMore, reset } = usePaginatedListings(true);
 };
 
 // Helper function to generate image URL based on the listing
@@ -43,5 +44,25 @@ return (
         Refresh Listings
       </button>
     </div>
+    {/**handle errors with refresh button */}
+    {error && ( 
+        <div className="error-state">
+          <p>{error}</p>
+          <button onClick={handleRefresh}>Try Again</button>
+        </div>
+      )}
+
+
+
+
+
+
+
+
+
+
+
+
   </div>
+
 );
