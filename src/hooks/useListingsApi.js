@@ -9,7 +9,7 @@ import { useAuth } from "./useAuth";
 import listingService from "../api/listingService";
 
 /**
- * Consolidated hook for accessing and managing listings data using React Query
+ * hook for accessing and managing listings data using React Query
  * Combines functionality from useListings, useListingsQuery, and useMyListings
  * Uses ListingService for the underlying API calls
  *
@@ -47,7 +47,6 @@ export const useListingsApi = (options = {}) => {
     });
   };
 
-  // Hook for fetching listings for a specific host
   const useHostListings = (hostId) => {
     return useQuery({
       queryKey: ["listings", "host", hostId],
@@ -73,7 +72,7 @@ export const useListingsApi = (options = {}) => {
     });
   };
 
-  // Hook for fetching my listings (current user's listings)
+  // Hook for fetching current user's listings
   const useMyListings = () => {
     return useHostListings(userId);
   };

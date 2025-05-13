@@ -33,29 +33,26 @@ const Profile = () => {
   // Helper to set user listings from the hook response
   const [userListingsState, setUserListings] = useState([]);
 
-  // Handle listing click to navigate to detail page
+
   const navigateToDetail = (listingId) => {
     navigate(`/listings/${listingId}`);
   };
 
-  // Navigate to create listing page
+
   const navigateToCreateListing = () => {
     navigate("/create-listing");
   };
 
-  // Navigate to update listing page
   const navigateToUpdateListing = (e, listingId) => {
-    e.stopPropagation(); // Prevent click from bubbling to the parent (which would navigate to listing detail)
-    navigate(`/update-listing/${listingId}`);
+    e.stopPropagation(); // Prevent click from bubbling to the parent
   };
 
-  // Navigate to add availability page
+
   const navigateToAddAvailability = (e, listingId) => {
     e.stopPropagation(); // Prevent click from bubbling to the parent
     navigate(`/add-availability/${listingId}`);
   };
 
-  // Handle logout
   const handleLogout = async () => {
     try {
       await logout();
