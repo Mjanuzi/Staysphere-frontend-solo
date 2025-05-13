@@ -11,7 +11,8 @@ import "./Listings.css";
 const Listings = () => {
   const navigate = useNavigate();
   //Using the listings hook
-  const { listings, loading, hasMore, loadMore, reset } = usePaginatedListings(true);
+  const { listings, loading, hasMore, loadMore, reset } =
+    usePaginatedListings(true);
 };
 
 // Helper function to generate image URL based on the listing
@@ -40,29 +41,36 @@ return (
   <div className="listings-page">
     <div className="listings-header">
       <h1>All Listings</h1>
-      <button className="refresh-button" onClick={handleRefresh}>{/**Refresh page on click */}
+      <button className="refresh-button" onClick={handleRefresh}>
+        {/**Refresh page on click */}
         Refresh Listings
       </button>
     </div>
     {/**handle errors with refresh button */}
-    {error && ( 
-        <div className="error-state">
-          <p>{error}</p>
-          <button onClick={handleRefresh}>Try Again</button>
-        </div>
-      )}
+    {error && (
+      <div className="error-state">
+        <p>{error}</p>
+        <button onClick={handleRefresh}>Try Again</button>
+      </div>
+    )}
+
+    {listings.length === 0 ? (
+      <p>No listings available at the moment.</p>
+    ) : (
+      <InfiniteScroll
+        dataLength={listings.length}
+        next={loadMore}
+        hasMore={hasMore}
+        loader={
+          <div className="listings.loader">
+            <div className="loading-indicator">Loading more listings...</div>
+          </div>
+        }
+      >
+        
 
 
-
-
-
-
-
-
-
-
-
-
+      </InfiniteScroll>
+    )}
   </div>
-
 );
