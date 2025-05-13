@@ -17,9 +17,9 @@ const Listings = () => {
   // Helper function to generate image URL based on the listing
   const getImageUrl = (listing) => {
     if (!listing) {
-      return "/src/assets/no-img-pic.png";
+      return "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=500&auto=format&fit=crop";
     }
-    return listing.getImageUrl || "/src/assets/no-img-pic.png";
+    return listing.getImageUrl || "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=500&auto=format&fit=crop";
   };
 
   //When refreshing the page, fetching all listings
@@ -78,6 +78,11 @@ const Listings = () => {
                 className="listing-card"
                 onClick={() => navigateToDetail(listing.listingId)}
               >
+                <img
+                  src={getImageUrl(listing)}
+                  alt={listing.listingTitle || "Listing"}
+                  className="listing-card-image"
+                />
                 <div className="listing-card-content">
                   <h3 className="listing-card-title">
                     {listing.listingTitle || "Unnamed Listing"}
