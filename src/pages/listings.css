@@ -87,6 +87,10 @@
     gap: 2rem;
     margin-top: 2rem;
   }
+  .end-message{
+    text-align: center;
+    padding: 2rem;
+  }
   
   .listing-card {
     border-radius: 12px;

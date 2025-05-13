@@ -66,6 +66,11 @@ return (
             <div className="loading-indicator">Loading more listings...</div>
           </div>
         }
+        endMessage={
+            <div className="end-message">
+                <p>No more listings to load</p>
+            </div>
+        }
       >
         
 
