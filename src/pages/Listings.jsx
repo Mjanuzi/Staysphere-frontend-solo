@@ -33,7 +33,7 @@ const navigateToDetail = (listingId) => {
 };
 
 //while loading
-if (loading) {
+if (loading && listings.length === 0) {
   return <div className="loading-state">Loading listings...</div>;
 }
 
