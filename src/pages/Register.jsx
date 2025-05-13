@@ -17,8 +17,18 @@ const Register = () => {
     e.preventDefault();
 
     try {
-      await register(username, password, email, age, country);
-      navigate("/profile");
+      const userData = {
+        username,
+        password,
+        email,
+        country,
+        age: parseInt(age, 10) || 0,
+        isActive: true,
+        roles: [],
+      };
+
+      await register(userData);
+      navigate("/login");
     } catch (err) {
       console.log("error: " + err);
     }
