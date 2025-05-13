@@ -6,11 +6,12 @@ import {
 } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useAuth } from "./useAuth";
-import api from "../api/axios";
+import listingService from "../api/listingService";
 
 /**
  * Consolidated hook for accessing and managing listings data using React Query
  * Combines functionality from useListings, useListingsQuery, and useMyListings
+ * Uses ListingService for the underlying API calls
  *
  * @param {Object} options - Configuration options
  * @param {boolean} options.enabled - Whether to enable the automatic data fetching
@@ -36,8 +37,7 @@ export const useListingsApi = (options = {}) => {
       queryKey: ["listings"],
       queryFn: async () => {
         try {
-          const response = await api.get("/api/listing/getall");
-          return response.data;
+          return await listingService.getAllListings();
         } catch (err) {
           console.error("Error fetching listings:", err);
           throw new Error(err.message || "Failed to fetch listings");
@@ -58,18 +58,14 @@ export const useListingsApi = (options = {}) => {
 
         console.log(`Fetching listings for host with ID: ${hostId}`);
         try {
-          const response = await api.get(`/api/listing/gethostbyid/${hostId}`);
-          console.log("Host listings response:", response.data);
-          return response.data;
+          const data = await listingService.getListingsByHostId(hostId);
+          console.log("Host listings response:", data);
+          return data;
         } catch (err) {
           console.error(
             `Error fetching listings for host with ID ${hostId}:`,
             err
           );
-          if (err.response) {
-            console.error("Response status:", err.response.status);
-            console.error("Response data:", err.response.data);
-          }
           throw new Error(err.message || "Failed to fetch host listings");
         }
       },
@@ -87,8 +83,7 @@ export const useListingsApi = (options = {}) => {
     return useQuery({
       queryKey: ["listing", listingId],
       queryFn: async () => {
-        const response = await api.get(`/api/listing/getbyid/${listingId}`);
-        return response.data;
+        return await listingService.getListingById(listingId);
       },
       enabled: enabled && Boolean(listingId),
     });
@@ -100,8 +95,8 @@ export const useListingsApi = (options = {}) => {
       queryKey: ["paginatedListings"],
       queryFn: async ({ pageParam = 0 }) => {
         try {
-          const response = await api.get("/api/listing/getall");
-          const allListings = response.data || [];
+          // Get all listings and paginate manually
+          const allListings = await listingService.getAllListings();
 
           // Simulate pagination by slicing the data
           const startIndex = pageParam * pageSize;
@@ -126,8 +121,7 @@ export const useListingsApi = (options = {}) => {
   // Mutation for creating a new listing
   const createListingMutation = useMutation({
     mutationFn: async (listingData) => {
-      const response = await api.post("/api/listing/create", listingData);
-      return response.data;
+      return await listingService.createListing(listingData);
     },
     onSuccess: () => {
       // Invalidate relevant queries to refetch data
@@ -143,11 +137,7 @@ export const useListingsApi = (options = {}) => {
   // Mutation for updating a listing
   const updateListingMutation = useMutation({
     mutationFn: async ({ listingId, listingData }) => {
-      const response = await api.patch(
-        `/api/listing/patch/${listingId}`,
-        listingData
-      );
-      return response.data;
+      return await listingService.updateListing(listingId, listingData);
     },
     onSuccess: (data, variables) => {
       // Invalidate relevant queries
@@ -160,6 +150,35 @@ export const useListingsApi = (options = {}) => {
           queryKey: ["listings", "host", userId],
         });
       }
+    },
+  });
+
+  // Mutation for deleting a listing
+  const deleteListingMutation = useMutation({
+    mutationFn: async (listingId) => {
+      return await listingService.deleteListing(listingId);
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
+      if (userId) {
+        queryClient.invalidateQueries({
+          queryKey: ["listings", "host", userId],
+        });
+      }
+    },
+  });
+
+  // Mutation for adding availability to a listing
+  const addAvailabilityMutation = useMutation({
+    mutationFn: async ({ listingId, availabilityData }) => {
+      return await listingService.addAvailability(listingId, availabilityData);
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({
+        queryKey: ["listing", variables.listingId],
+      });
     },
   });
 
@@ -217,10 +236,7 @@ export const useListingsApi = (options = {}) => {
           await queryClient.fetchQuery({
             queryKey: ["listings", "host", hostId],
             queryFn: async () => {
-              const response = await api.get(
-                `/api/listing/gethostbyid/${hostId}`
-              );
-              return response.data;
+              return await listingService.getListingsByHostId(hostId);
             },
           });
 
@@ -260,10 +276,7 @@ export const useListingsApi = (options = {}) => {
             await queryClient.fetchQuery({
               queryKey: ["listings", "host", hostId],
               queryFn: async () => {
-                const response = await api.get(
-                  `/api/listing/gethostbyid/${hostId}`
-                );
-                return response.data;
+                return await listingService.getListingsByHostId(hostId);
               },
             });
 
@@ -287,8 +300,12 @@ export const useListingsApi = (options = {}) => {
     ...hookResult,
     createListing: createListingMutation.mutate,
     updateListing: updateListingMutation.mutate,
+    deleteListing: deleteListingMutation.mutate,
+    addAvailability: addAvailabilityMutation.mutate,
     isCreating: createListingMutation.isPending,
     isUpdating: updateListingMutation.isPending,
+    isDeleting: deleteListingMutation.isPending,
+    isAddingAvailability: addAvailabilityMutation.isPending,
   };
 };
 

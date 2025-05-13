@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { usePaginatedListings } from "../hooks/usePaginatedListings";
+import { usePaginatedListingsQuery } from "../hooks/usePaginatedListingsQuery";
 import InfiniteScroll from "react-infinite-scroll-component";
 import "./Listings.css";
 
@@ -11,8 +11,8 @@ import "./Listings.css";
 const Listings = () => {
   const navigate = useNavigate();
   //Using the listings hook
-  const { listings, loading, hasMore, loadMore, reset } =
-    usePaginatedListings(true);
+  const { listings, loading, error, hasMore, loadMore, reset } =
+  usePaginatedListingsQuery();
 
   // Helper function to generate image URL based on the listing
   const getImageUrl = (listing) => {
