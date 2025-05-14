@@ -11,6 +11,7 @@ const CreateListing = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  //set up initial listing form data with host ID from current user
   const [formData, setFormData] = useState({
     hostId: userId,
     listingTitle: "",
@@ -20,10 +21,11 @@ const CreateListing = () => {
     listingImages: [],
   });
 
+  // Image URLs state for tracking multiple image URLs
+  const [imageUrls, setImageUrl] = useState([]);
 
 
 
 
 
-  
 };
