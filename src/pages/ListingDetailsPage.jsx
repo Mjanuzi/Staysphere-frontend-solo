@@ -102,5 +102,20 @@ const ListingDetailsPage = () => {
       <section className="listing-header">
         <h1>{listing.listingTitle}</h1>
         <p className="listing-location">{listing.location}</p>
-      </section></div>
+      </section>
+
+      <section className="listing-image">
+        <div className="placeholder-image">Listing Image Placeholder</div>
+      </section>
+
+      <section className="listing-booking-info">
+        <div className="listing-price">
+          <p>
+            <span className="price">{listing.listingPricePerNight} kr</span>
+            <span className="per-night"> / night</span>
+          </p>
+        </div>
+      </section>
+
+      <hr /> </div>
   )
