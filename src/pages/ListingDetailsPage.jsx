@@ -96,3 +96,11 @@ const ListingDetailsPage = () => {
   if (!listing) {
     return <div className="error-state">Listing not found</div>;
   }
+
+  return (
+    <div className="listing-detail-container">
+      <section className="listing-header">
+        <h1>{listing.listingTitle}</h1>
+        <p className="listing-location">{listing.location}</p>
+      </section></div>
+  )
