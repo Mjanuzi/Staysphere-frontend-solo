@@ -84,3 +84,15 @@ const ListingDetailsPage = () => {
       }, 2000);
     }, 1500);
   };
+
+  if (loading) {
+    return <div className="loading-state">Loading listing details...</div>;
+  }
+
+  if (error) {
+    return <div className="error-state">{error}</div>;
+  }
+
+  if (!listing) {
+    return <div className="error-state">Listing not found</div>;
+  }
