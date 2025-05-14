@@ -1,9 +1,4 @@
-/* 
- * Header CSS
- * 
- * Styles for the header component including search bar and filter categories.
- * Mobile-first with responsive enhancements for larger screens.
- */
+
 
  .header-container {
     padding: 0.75rem 1rem;
@@ -13,7 +8,6 @@
     background-color: #ffffff;
   }
   
-  /* Search bar styling */
   .search-container {
     width: 100%;
   }
@@ -140,7 +134,6 @@
     gap: 0.25rem;
   }
   
-  /* Tablet breakpoint (768px) */
   @media (min-width: 768px) {
     .header-container {
       padding: 1.5rem;
@@ -163,8 +156,8 @@
       max-width: none;
     }
   }
-  
-  /* Desktop breakpoint (1024px) */
+
+
   @media (min-width: 1024px) {
     .header-container {
       flex-direction: row;
