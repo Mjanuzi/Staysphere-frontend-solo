@@ -34,7 +34,7 @@ const ListingDetailsPage = () => {
       setLoading(false);
     }, 1000);
   }, [listingId]);
-  
+
   // Calculate number of nights and total price when dates change
   useEffect(() => {
     if (selectedDates.length === 2 && listing) {
@@ -51,3 +51,36 @@ const ListingDetailsPage = () => {
     }
   }, [selectedDates, listing]);
 
+ // Handle booking creation
+ const handleBooking = () => {
+    // Reset booking status
+    setBookingError(null);
+    setBookingLoading(true);
+    setBookingSuccess(false);
+
+    // Check user authentication
+    if (!currentUser || !userId) {
+      setBookingError("You must be logged in to make a booking.");
+      setBookingLoading(false);
+      return;
+    }
+
+    if (selectedDates.length !== 2) {
+      setBookingError("Please select check-in and check-out dates");
+      setBookingLoading(false);
+      return;
+    }
+
+    // Simulate booking process
+    setTimeout(() => {
+      setBookingLoading(false);
+      setBookingSuccess(true);
+
+      // Show success message
+      setTimeout(() => {
+        // In real app would navigate to profile
+        setBookingSuccess(false);
+        setSelectedDates([]);
+      }, 2000);
+    }, 1500);
+  };
