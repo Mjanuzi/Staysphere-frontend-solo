@@ -117,5 +117,57 @@ const ListingDetailsPage = () => {
         </div>
       </section>
 
-      <hr /> </div>
-  )
+      <hr />
+
+      <section className="listing-description">
+        <h2>About this place</h2>
+        <p>{listing.description || "Placeholder description text."}</p>
+      </section>
+
+      <hr />
+
+      <section className="booking-section">
+        <h2>Select dates</h2>
+        <DatePicker
+          selectedDates={selectedDates}
+          onDateChange={setSelectedDates}
+          bookedDates={[]} // Would be populated from API
+          availableDates={[]} // Would be populated from API
+        />
+
+        {selectedDates.length === 2 && (
+          <div className="booking-summary">
+            <h3>Booking Summary</h3>
+            <div className="booking-line">
+              <span>
+                {listing.listingPricePerNight} kr × {numberOfNights} nights
+              </span>
+              <span>{totalPrice} kr</span>
+            </div>
+            <div className="booking-line total">
+              <span>Total</span>
+              <span>{totalPrice} kr</span>
+            </div>
+          </div>
+        )}
+
+        {bookingError && <div className="booking-error">{bookingError}</div>}
+
+        {bookingSuccess && (
+          <div className="booking-success">
+            Booking successful! You'll be redirected shortly.
+          </div>
+        )}
+
+        <button
+          className="reserve-button"
+          onClick={handleBooking}
+          disabled={bookingLoading || selectedDates.length !== 2}
+        >
+          {bookingLoading ? "Processing..." : "Reserve"}
+        </button>
+      </section>
+    </div>
+  );
+export default ListingDetail;
+  
