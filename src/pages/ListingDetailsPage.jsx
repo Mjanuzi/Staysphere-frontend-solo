@@ -21,3 +21,17 @@ const ListingDetailsPage = () => {
   const [bookingError, setBookingError] = useState(null);
 
 }
+  //Placeholder data
+  useEffect(() => {
+    // Simulate API call delay
+    setTimeout(() => {
+      setListing({
+        listingId: "placeholder-123",
+        listingTitle: "Placeholder Listing Title",
+        location: "Stockholm, Sweden",
+        listingPricePerNight: 1200,
+        description: "This is a placeholder description for this listing.",
+      });
+      setLoading(false);
+    }, 1000);
+  }, [listingId]);
