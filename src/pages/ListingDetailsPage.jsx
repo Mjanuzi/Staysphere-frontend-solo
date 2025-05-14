@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import DatePicker from "../components/DatePicker";
 import "./ListingDetail.css";
 
 const ListingDetailsPage = () => {
@@ -35,3 +34,20 @@ const ListingDetailsPage = () => {
       setLoading(false);
     }, 1000);
   }, [listingId]);
+  
+  // Calculate number of nights and total price when dates change
+  useEffect(() => {
+    if (selectedDates.length === 2 && listing) {
+      const startDate = new Date(selectedDates[0]);
+      const endDate = new Date(selectedDates[1]);
+      const diffTime = Math.abs(endDate - startDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      setNumberOfNights(diffDays);
+      setTotalPrice(diffDays * listing.listingPricePerNight);
+    } else {
+      setNumberOfNights(0);
+      setTotalPrice(0);
+    }
+  }, [selectedDates, listing]);
+
