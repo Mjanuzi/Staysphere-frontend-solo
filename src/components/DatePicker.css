@@ -110,49 +110,30 @@
 .react-datepicker__day.available-date:not(.react-datepicker__day--selected):not(
     .react-datepicker__day--in-range
   ) {
-<<<<<<< HEAD
   background-color: rgba(0, 128, 0, 0.15) !important;
   position: relative !important;
   border: 1px solid rgba(0, 128, 0, 0.3) !important;
-=======
-  background-color: rgba(0, 128, 0, 0.1) !important;
-  position: relative !important;
->>>>>>> 6d445200a9137c6fa0f10dfbea0933b66f9ad731
 }
 
 .react-datepicker__day.available-date:not(.react-datepicker__day--selected):not(
     .react-datepicker__day--in-range
   ):hover {
-<<<<<<< HEAD
   background-color: rgba(0, 128, 0, 0.25) !important;
-=======
-  background-color: rgba(0, 128, 0, 0.2) !important;
->>>>>>> 6d445200a9137c6fa0f10dfbea0933b66f9ad731
 }
 
 /* Checkout date styling - highlight the day after selected start date */
 .react-datepicker__day.checkout-date:not(.react-datepicker__day--selected):not(
     .react-datepicker__day--disabled
   ) {
-<<<<<<< HEAD
   background-color: rgba(34, 34, 34, 0.1) !important;
   border: 1px dashed #222 !important;
   font-weight: bold !important;
-=======
-  background-color: rgba(255, 187, 0, 0.2) !important;
-  position: relative !important;
-  border: 1px dashed #ffc107 !important;
->>>>>>> 6d445200a9137c6fa0f10dfbea0933b66f9ad731
 }
 
 .react-datepicker__day.checkout-date:not(.react-datepicker__day--selected):not(
     .react-datepicker__day--disabled
   ):hover {
-<<<<<<< HEAD
   background-color: rgba(34, 34, 34, 0.2) !important;
-=======
-  background-color: rgba(255, 187, 0, 0.3) !important;
->>>>>>> 6d445200a9137c6fa0f10dfbea0933b66f9ad731
 }
 
 /* Today styling */
