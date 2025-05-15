@@ -17,3 +17,12 @@ const UpdateListing = () => {
     const[fetchLoading, setFetchLoading] = useState(true);
     const[errorMessage,SetErrorMessage] = useState("");
 }
+//Form state
+const [formData, setFormData] = useState({
+    hostId: userId,
+    listingTitle: "",
+    listingDescription: "",
+    listingPricePerNight: "",
+    guestLimit: 1,
+    listingImages: [],
+  });
