@@ -25,10 +25,17 @@ const CreateListing = () => {
   const [imageUrls, setImageUrl] = useState([]);
 
   //handle input changes
-  const handleChange =(e) => {
-    const {name, value} = e.target;
-  }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
+    // convert price to number
+    if (name === "listingPricePerNight") {
+      setFormData({ 
+        ...formData, 
+        [name]: parseFloat(value) || "",
+     });
+    }
 
-
+    //convert guests to integer
+  };
 };
