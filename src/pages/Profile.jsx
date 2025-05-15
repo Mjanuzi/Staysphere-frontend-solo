@@ -1,176 +1,197 @@
-// Profile.jsx (partial)
+
 import { useState, useEffect } from "react";
-import { Link, Navigate, useLocation } from "react-router-dom";
+import { useNavigate} from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import bookingService from "../api/bookingService";
-import listingService from "../api/listingService";
+import { useListings } from "../hooks/useListings";
 import "./Profile.css";
 
 const Profile = () => {
-  const { currentUser, logout } = useAuth();
-  const location = useLocation();
-  const [activeTab, setActiveTab] = useState("bookings");
-  const [bookings, setBookings] = useState([]);
-  const [listings, setListings] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { currentUser, userId, loading, logout } = useAuth();
+  const navigate = useNavigate();
 
-  // Redirect if not authenticated
-  if (!currentUser) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  const {
+    listings: userListings,
+    loading: listingsLoading,
+    getHostListings,
+  } = useListings(false);
+
+  // Fetch user's bookings and listings when component mounts
+  useEffect(() => {
+    if (currentUser && userId) {
+
+      // For listings, we need to use the userId (which is the hostId for listings)
+      getHostListings(userId).then((data) => {
+        if (Array.isArray(data)) {
+          setUserListings(data);
+        }
+      });
+
+      console.log("Fetching listings for user ID:", userId);
+    }
+  }, [currentUser, userId, getHostListings]);
+
+  // Helper to set user listings from the hook response
+  const [userListingsState, setUserListings] = useState([]);
+
+
+  const navigateToDetail = (listingId) => {
+    navigate(`/listings/${listingId}`);
+  };
+
+
+  const navigateToCreateListing = () => {
+    navigate("/create-listing");
+  };
+
+  const navigateToUpdateListing = (e, listingId) => {
+    e.stopPropagation(); // Prevent click from bubbling to the parent
+  };
+
+
+  const navigateToAddAvailability = (e, listingId) => {
+    e.stopPropagation(); // Prevent click from bubbling to the parent
+    navigate(`/add-availability/${listingId}`);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
+  // Handle loading state
+  if (loading) {
+    return <div className="loading-state">Loading profile...</div>;
   }
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setIsLoading(true);
+  // Safety check in case currentUser is null or undefined
+  if (!currentUser) {
+    return (
+      <div className="error-state">
+        User information not available. Please log in again.
+      </div>
+    );
+  }
 
-        // Fetch data based on active tab
-        if (activeTab === "bookings") {
-          const data = await bookingService.getUserBookings(currentUser.id);
-          setBookings(data);
-        } else if (
-          activeTab === "listings" &&
-          currentUser.roles.includes("HOST")
-        ) {
-          const data = await listingService.getUserListings(currentUser.id);
-          setListings(data);
-        }
+  // Handle the roles display, which could be an array or set from the backend
+  const displayRoles = () => {
+    if (!currentUser.roles) return "Standard User";
 
-        setError(null);
-      } catch (err) {
-        console.error(`Failed to fetch user ${activeTab}:`, err);
-        setError(`Failed to load your ${activeTab}. Please try again.`);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (Array.isArray(currentUser.roles)) {
+      return currentUser.roles.join(", ");
+    }
 
-    fetchUserData();
-  }, [activeTab, currentUser.id, currentUser.roles]);
+    if (typeof currentUser.roles === "object") {
+      return Object.values(currentUser.roles).join(", ");
+    }
+
+    return String(currentUser.roles);
+  };
 
   return (
-    <div className="profile-page">
-      <div className="profile-header">
-        <div className="user-info">
-          <div className="user-avatar">
-            {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
-          </div>
-          <div className="user-details">
-            <h1 className="user-name">{currentUser.name}</h1>
-            <p className="user-email">{currentUser.email}</p>
-          </div>
+    <div className="profile-container">
+      <h1>Your Profile</h1>
+
+      <div className="profile-card">
+        <h2>Account Information</h2>
+        <div className="profile-field">
+          <span className="field-label">Username:</span>
+          <span className="field-value">
+            {currentUser.username || "Not available"}
+          </span>
         </div>
-        <button className="logout-button" onClick={logout}>
+
+        <div className="profile-field">
+          <span className="field-label">Role:</span>
+          <span className="field-value">{displayRoles()}</span>
+        </div>
+
+        {currentUser.email && (
+          <div className="profile-field">
+            <span className="field-label">Email:</span>
+            <span className="field-value">{currentUser.email}</span>
+          </div>
+        )}
+
+        {currentUser.country && (
+          <div className="profile-field">
+            <span className="field-label">Country:</span>
+            <span className="field-value">{currentUser.country}</span>
+          </div>
+        )}
+
+        <button className="logout-button" onClick={handleLogout}>
           Logout
         </button>
       </div>
 
-      <div className="profile-tabs">
-        <button
-          className={`profile-tab ${activeTab === "bookings" ? "active" : ""}`}
-          onClick={() => setActiveTab("bookings")}
-        >
-          My Bookings
-        </button>
 
-        {currentUser.roles.includes("HOST") && (
-          <button
-            className={`profile-tab ${
-              activeTab === "listings" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("listings")}
-          >
-            My Listings
+      {/* User's Listings Section with Create Button */}
+      <div className="profile-card">
+        <div className="section-header">
+          <h2>My Listings</h2>
+          <button className="create-button" onClick={navigateToCreateListing}>
+            Create New Listing
           </button>
-        )}
+        </div>
 
-        <button
-          className={`profile-tab ${activeTab === "account" ? "active" : ""}`}
-          onClick={() => setActiveTab("account")}
-        >
-          Account Settings
-        </button>
-      </div>
-
-      <div className="profile-content">
-        {isLoading ? (
-          <div className="loading-indicator">Loading...</div>
-        ) : error ? (
-          <div className="error-message">{error}</div>
+        {listingsLoading ? (
+          <div className="loading-state">Loading listings...</div>
+        ) : userListingsState.length > 0 ? (
+          <div className="listings-list">
+            {userListingsState.map((listing) => (
+              <div
+                key={listing.listingId || Math.random()}
+                className="listing-item"
+                onClick={() => navigateToDetail(listing.listingId)}
+              >
+                <h3>{listing.listingTitle || "Unnamed Listing"}</h3>
+                <div className="listing-details">
+                  <p>
+                    <strong>Location:</strong>{" "}
+                    {listing.location || "Unknown location"}
+                  </p>
+                  <p>
+                    <strong>Price:</strong> $
+                    {listing.listingPricePerNight?.toFixed(2) || "N/A"} per
+                    night
+                  </p>
+                  <p>
+                    <strong>Status:</strong> {listing.listingStatus || "Active"}
+                  </p>
+                </div>
+                <div className="listing-actions">
+                  <button
+                    className="action-button update-button"
+                    onClick={(e) =>
+                      navigateToUpdateListing(e, listing.listingId)
+                    }
+                  >
+                    Update
+                  </button>
+                  <button
+                    className="action-button availability-button"
+                    onClick={(e) =>
+                      navigateToAddAvailability(e, listing.listingId)
+                    }
+                  >
+                    Add Availability
+                  </button>
+                </div>
+                <div className="view-listing-badge">View Details</div>
+              </div>
+            ))}
+          </div>
         ) : (
-          <>
-            {activeTab === "bookings" && (
-              <div className="bookings-section">
-                <h2 className="section-title">Your Bookings</h2>
-                {bookings.length === 0 ? (
-                  <div className="empty-state">
-                    <p>You don't have any bookings yet.</p>
-                    <Link to="/listings" className="action-button">
-                      Explore Listings
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="bookings-list">
-                    {bookings.map((booking) => (
-                      <div key={booking.id} className="booking-card">
-                        {/* Booking card content */}
-                        <h3>{booking.listing.title}</h3>
-                        <p>
-                          {booking.checkInDate} to {booking.checkOutDate}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === "listings" && (
-              <div className="listings-section">
-                <div className="section-header">
-                  <h2 className="section-title">Your Listings</h2>
-                  <Link to="/listings/create" className="create-button">
-                    Create New Listing
-                  </Link>
-                </div>
-                {listings.length === 0 ? (
-                  <div className="empty-state">
-                    <p>You don't have any listings yet.</p>
-                    <Link to="/listings/create" className="action-button">
-                      Create Your First Listing
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="listings-grid">
-                    {listings.map((listing) => (
-                      <div key={listing.id} className="listing-card">
-                        {/* Listing card content */}
-                        <h3>{listing.title}</h3>
-                        <p>${listing.pricePerNight} per night</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === "account" && (
-              <div className="account-section">
-                <h2 className="section-title">Account Settings</h2>
-                <div className="account-form">
-                  <div className="form-group">
-                    <label>Name</label>
-                    <input type="text" value={currentUser.name} disabled />
-                  </div>
-                  <div className="form-group">
-                    <label>Email</label>
-                    <input type="email" value={currentUser.email} disabled />
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
+          <div className="no-items-container">
+            <p className="no-items">You don't have any listings yet.</p>
+            <p className="create-prompt">
+              Create your first listing to get started!
+            </p>
+          </div>
         )}
       </div>
     </div>

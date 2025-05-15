@@ -1,66 +1,78 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useListings } from "../hooks/useListings";
-import "./Home.css";
+import { usePaginatedListingsQuery } from "../hooks/usePaginatedListingsQuery";
+import InfiniteScroll from "react-infinite-scroll-component";
+import "./Listings.css";
 
-const Home = () => {
+/**Listing page
+ * Display all listings, fetching data from backend
+ */
+
+const Listings = () => {
   const navigate = useNavigate();
-  // Use the listings hook with initial fetch enabled
-  const { listings, loading, error, fetchListings } = useListings(true);
-
-  // Take only the first 3 listings for the featured section
-  const featuredListings = listings.slice(0, 3);
+  //Using the listings hook
+  const { listings, loading, error, hasMore, loadMore, reset } =
+  usePaginatedListingsQuery();
 
   // Helper function to generate image URL based on the listing
   const getImageUrl = (listing) => {
-    // In a real application, this would use the actual image URL from the listing
-    // For now, use placeholder images based on the location
-    if (!listing)
-      return "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=500&auto=format&fit=crop";
-
-    const location = String(listing.location || "").toLowerCase();
-
-    if (location.includes("stockholm")) {
-      return "https://images.unsplash.com/photo-1504512485720-7d83a16ee930?q=80&w=500&auto=format&fit=crop";
-    } else if (location.includes("barcelona")) {
-      return "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?q=80&w=500&auto=format&fit=crop";
-    } else if (location.includes("bali")) {
-      return "https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=500&auto=format&fit=crop";
-    } else if (
-      location.includes("new york") ||
-      location.includes("manhattan")
-    ) {
-      return "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?q=80&w=500&auto=format&fit=crop";
-    } else if (location.includes("tulum")) {
-      return "https://images.unsplash.com/photo-1470770903676-69b98201ea1c?q=80&w=500&auto=format&fit=crop";
-    } else {
+    if (!listing) {
       return "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=500&auto=format&fit=crop";
     }
+    return listing.getImageUrl || "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=500&auto=format&fit=crop";
   };
 
+  //When refreshing the page, fetching all listings
   const handleRefresh = () => {
-    fetchListings();
+    reset();
   };
 
+  //navigate to detail - when listingDetail is done
   const navigateToDetail = (listingId) => {
     navigate(`/listings/${listingId}`);
   };
 
-  return (
-    <div className="home-page">
-      <h1>Featured Listings</h1>
+  //while loading
+  if (loading && listings.length === 0) {
+    return <div className="loading-state">Loading listings...</div>;
+  }
 
-      {loading ? (
-        <div className="loading-state">Loading featured listings...</div>
-      ) : error ? (
+  return (
+    <div className="listings-page">
+      <div className="listings-header">
+        <h1>All Listings</h1>
+        <button className="refresh-button" onClick={handleRefresh}>
+          Refresh Listings
+        </button>
+      </div>
+
+      {error && (
         <div className="error-state">
-          <p>{error}</p>
+          <p>{error.message || "An error occurred while fetching listings."}</p>
           <button onClick={handleRefresh}>Try Again</button>
         </div>
+      )}
+
+      {listings.length === 0 ? (
+        <p>No listings available at the moment.</p>
       ) : (
-        <div className="listings-grid">
-          {featuredListings.length > 0 ? (
-            featuredListings.map((listing) => (
+        <InfiniteScroll
+          dataLength={listings.length}
+          next={loadMore}
+          hasMore={hasMore}
+          loader={
+            <div className="listings-loader">
+              <div className="loading-indicator">Loading more listings...</div>
+            </div>
+          }
+          endMessage={
+            <div className="end-message">
+              <b>No more listings to load</b>
+            </div>
+          }
+        >
+          <div className="listings-grid">
+            {listings.map((listing) => (
               <div
                 key={listing.listingId || Math.random()}
                 className="listing-card"
@@ -105,14 +117,12 @@ const Home = () => {
                   </div>
                 </div>
               </div>
-            ))
-          ) : (
-            <p>No featured listings available right now.</p>
-          )}
-        </div>
+            ))}
+          </div>
+        </InfiniteScroll>
       )}
     </div>
   );
 };
 
-export default Home;
+export default Listings;
