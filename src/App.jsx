@@ -10,6 +10,7 @@ import Unauthorized from "./pages/Unauthorized";
 import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "./contexts/auth/AuthContext";
 import Layout from "./components/layout/Layout";
+import UpdateListing from "./pages/UpdateListing";
 
 function App() {
   return (
@@ -24,10 +25,15 @@ function App() {
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/listings" element={<Listings />} />
             <Route path="/listings/:listingId" element={<ListingDetail />} />
+          
 
             {/* protected routes for all authenticated users */}
             <Route element={<ProtectedRoute />}>
               <Route path="/profile" element={<Profile />} />
+              <Route
+                path="/update-listing/:listingId"
+                element={<UpdateListing />}
+              />
             </Route>
 
             {/* protected routes for admins only */}
