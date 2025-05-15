@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
-import { useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useListings } from "../hooks/useListings";
+
 import "./Profile.css";
 
 const Profile = () => {
@@ -18,7 +18,6 @@ const Profile = () => {
   // Fetch user's bookings and listings when component mounts
   useEffect(() => {
     if (currentUser && userId) {
-
       // For listings, we need to use the userId (which is the hostId for listings)
       getHostListings(userId).then((data) => {
         if (Array.isArray(data)) {
@@ -33,11 +32,9 @@ const Profile = () => {
   // Helper to set user listings from the hook response
   const [userListingsState, setUserListings] = useState([]);
 
-
   const navigateToDetail = (listingId) => {
     navigate(`/listings/${listingId}`);
   };
-
 
   const navigateToCreateListing = () => {
     navigate("/create-listing");
@@ -45,8 +42,8 @@ const Profile = () => {
 
   const navigateToUpdateListing = (e, listingId) => {
     e.stopPropagation(); // Prevent click from bubbling to the parent
+    navigate(`/update-listing/${listingId}`);
   };
-
 
   const navigateToAddAvailability = (e, listingId) => {
     e.stopPropagation(); // Prevent click from bubbling to the parent
@@ -127,7 +124,6 @@ const Profile = () => {
           Logout
         </button>
       </div>
-
 
       {/* User's Listings Section with Create Button */}
       <div className="profile-card">
