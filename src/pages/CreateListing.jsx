@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { useListingsApi } from "../hooks/useListingsApi";
+import "./CreateListing.css";
 
 /* Create listing page
  *that lets user create a listing for their property */
@@ -10,6 +12,7 @@ const CreateListing = () => {
   const { userId } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const { createListing, isCreating } = useListingsApi();
 
   //set up initial listing form data with host ID from current user
   const [formData, setFormData] = useState({
@@ -108,19 +111,25 @@ const CreateListing = () => {
         hostId: userId,
       };
 
-      //Send the data to the server
-      const response = await api.post("/api/listing/create", submissionData);
+      console.log("Creating listing with data: ", submissionData);
 
-      // navigate to profile page if successful
-      navigate("/profile");
+      //Send the data to the server
+      //const response = await api.post("/api/listing/create", submissionData);
+      createListing(submissionData, {
+        onSuccess: () => {
+          console.log("Listing created successfully");
+          navigate("/profile");
+        },
+        onError: (error) => {
+          console.error("Error in mutation:", error);
+          setErrorMessage(
+            error.message || "Failed to create listing. Please try again."
+          );
+        },
+      });
     } catch (error) {
       console.error("Error creating listing:", error);
-      setErrorMessage(
-        error.response?.data?.message ||
-          "Failed to create listing. Please try again."
-      );
-    } finally {
-      setLoading(false);
+      setErrorMessage("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -158,6 +167,20 @@ const CreateListing = () => {
             required
           />
         </div>
+
+        <div className="form-group">
+            <label htmlFor="guestLimit">Guest Limit *</label>
+            <input type="number"
+            id="guestLimit"
+            name="guestLimit"
+            value={formData.guestLimit}
+            onChange={handleChange}
+            placeholder="Enter maximum numbers of guests"
+            min="1"
+            required />
+        </div>
+
+
 
         <div className="form-group">
           <label htmlFor="listingDescription">Listing Description *</label>
@@ -211,17 +234,17 @@ const CreateListing = () => {
           )}
         </div>
 
-        <div className="form-action">
+        <div className="form-actions">
           <button
             type="button"
             onClick={() => navigate("/profile")}
             className="cancel-button"
-            disabled={loading}
+            disabled={isCreating}
           >
             Cancel
           </button>
-          <button type="submit" className="sumbit-button" disabled={loading}>
-            {loading ? "Creating..." : "Create Listing"}
+          <button type="submit" className="submit-button" disabled={isCreating}>
+            {isCreating ? "Creating..." : "Create Listing"}
           </button>
         </div>
       </form>
