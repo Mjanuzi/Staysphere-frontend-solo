@@ -26,3 +26,6 @@ const [formData, setFormData] = useState({
     guestLimit: 1,
     listingImages: [],
   });
+  
+  // Image URLs state for tracking multiple image URLs
+  const [imageUrl, setImageUrl] = useState("");
