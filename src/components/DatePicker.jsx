@@ -27,6 +27,68 @@ const DatePicker = ({
         .filter((date) => date instanceof Date && !isNaN(date.getTime()));
     }, []);
   
+    // Parse all date arrays memoized function
+    const parsedSelectedDates = parseDates(selectedDates);
+    const parsedBookedDates = parseDates(bookedDates);
+    const parsedAvailableDates = parseDates(availableDates);
+  
+    // Conditionally log debug information
+    if (debug) {
+      console.log("DatePicker - Date Data:", {
+        selectedDates,
+        availableDates: availableDates.length,
+        bookedDates: bookedDates.length,
+      });
+    }
+  
+    // Helper function to determine if a date should be disabled
+    const isDateDisabled = useCallback(
+      (date) => {
+        // Past dates are always disabled
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (date < today) return true;
+  
+        // If it's a booked date, disable it
+        if (parsedBookedDates.some((bookedDate) => isSameDay(bookedDate, date))) {
+          return true;
+        }
+  
+        // If we're in booking mode (not adding availability)
+        if (!isAddingAvailability) {
+          // If there are available dates and this date is not in that list, disable it
+          if (parsedAvailableDates.length > 0) {
+            return !parsedAvailableDates.some((availableDate) =>
+              isSameDay(availableDate, date)
+            );
+          }
+        }
+  
+        return false;
+      },
+      [parsedBookedDates, parsedAvailableDates, isAddingAvailability, isSameDay]
+    );
+  
+    // Handle date changes
+    const handleDateChange = useCallback(
+      (dates) => {
+        if (!dates) {
+          onDateChange([]);
+          return;
+        }
+  
+        // If it's an array with start and end dates
+        if (Array.isArray(dates) && dates.length === 2) {
+          onDateChange(dates);
+        }
+        // If it's a single date (or first selection in a range)
+        else if (dates instanceof Date) {
+          onDateChange([dates]);
+        }
+      },
+      [onDateChange]
+    );
+  
     //selecting a range or a single date
     const selectsRange = isAddingAvailability || parsedSelectedDates.length > 0;
   
