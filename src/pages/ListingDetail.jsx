@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import "./ListingDetail.css";
 
-const ListingDetailsPage = () => {
+const ListingDetail = () => {
   const { listingId } = useParams();
   const navigate = useNavigate();
   const { currentUser, userId } = useAuth();
