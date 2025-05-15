@@ -37,11 +37,18 @@ const CreateListing = () => {
     }
 
     //convert guests to integer
-    else if (name === "guestLimit") {
+    else if (name === "gu2estLimit") {
         setFormData({
             ...formData,
             [name]: parseInt(value,10) || 1,
         })
     }
+
+
+
+
+
+
+
   };
 };
