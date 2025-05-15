@@ -79,7 +79,7 @@ const CreateListing = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  };
+  
 
   //validate form
   if (!formData.listingTitle.trim()) {
@@ -98,4 +98,36 @@ const CreateListing = () => {
     setErrorMessage("Guest limit must be at least 1");
     return;
   }
+
+  try {
+    setLoading(true);
+    setErrorMessage("");
+
+    //checking if hostid is set to the current user
+    const submissionData = {
+        ...formData,
+        hostId: userId,
+    };
+
+    //Send the data to the server
+    const response = await api.post("/api/listing/create", submissionData);
+
+    // navigate to profile page if successful
+    navigate("/profile");
+
+}catch (error){
+    console.error("Error creating listing:", error);
+    setErrorMessage(
+        error.response?.data?.message || "Failed to create listing. Please try again."
+    );
+}finally{
+    setLoading(false);
+}
+};
+
+
+
+
+
+
 };
