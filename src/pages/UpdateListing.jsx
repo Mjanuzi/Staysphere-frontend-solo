@@ -100,5 +100,12 @@ const [formData, setFormData] = useState({
       setImageUrl("");
     }
   };
-
-
+  // Remove image URL from the array
+  const handleRemoveImage = (index) => {
+    const updatedImages = [...formData.listingImages];
+    updatedImages.splice(index, 1);
+    setFormData({
+      ...formData,
+      listingImages: updatedImages,
+    });
+  };
