@@ -109,3 +109,53 @@ const [formData, setFormData] = useState({
       listingImages: updatedImages,
     });
   };
+    // Submit form
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+    
+        // Validate form
+        if (!formData.listingTitle.trim()) {
+          setErrorMessage("Listing title is required");
+          return;
+        }
+    
+        if (!formData.listingDescription.trim()) {
+          setErrorMessage("Listing description is required");
+          return;
+        }
+    
+        if (!formData.listingPricePerNight || formData.listingPricePerNight <= 0) {
+          setErrorMessage("Valid price per night is required");
+          return;
+        }
+    
+        if (!formData.guestLimit || formData.guestLimit < 1) {
+          setErrorMessage("Guest limit must be at least 1");
+          return;
+        }
+    
+        try {
+          setLoading(true);
+          setErrorMessage("");
+    
+          // Make sure hostId is set to the current userId
+          const submissionData = {
+            ...formData,
+            hostId: userId,
+          };
+    
+          // Send the data to the server
+          await api.patch(`/api/listing/patch/${listingId}`, submissionData);
+    
+          // If successful, navigate to profile page
+          navigate("/profile");
+        } catch (error) {
+          console.error("Error updating listing:", error);
+          setErrorMessage(
+            error.response?.data?.message ||
+              "Failed to update listing. Please try again."
+          );
+        } finally {
+          setLoading(false);
+        }
+      };
