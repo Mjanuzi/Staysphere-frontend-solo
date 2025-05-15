@@ -158,6 +158,21 @@ const CreateListing = () => {
             required
           />
         </div>
+
+        <div className="form-group">
+          <label htmlFor="listingDescription">Listing Description *</label>
+          <textarea 
+            id="listingDescription"
+            name="listingDescription"
+            value={formData.listingDescription}
+            onChange={handleChange}
+            placeholder="Describe your property, amenities, and surrounding area"
+            required
+          />
+        </div>
+
+
+
         
 
 
