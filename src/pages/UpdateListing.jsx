@@ -62,7 +62,7 @@ const [formData, setFormData] = useState({
     }
   }, [listingId]);
 
-  
+
    // Handle input changes
    const handleChange = (e) => {
     const { name, value } = e.target;
@@ -89,4 +89,16 @@ const [formData, setFormData] = useState({
       });
     }
   };
+
+  // Add image URL to the array
+  const handleAddImage = () => {
+    if (imageUrl.trim() !== "") {
+      setFormData({
+        ...formData,
+        listingImages: [...formData.listingImages, imageUrl],
+      });
+      setImageUrl("");
+    }
+  };
+
 
