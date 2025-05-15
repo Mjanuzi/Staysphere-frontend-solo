@@ -1,3 +1,19 @@
+import React, { useCallback, memo } from "react";
+import ReactDatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import "./DatePicker.css";
+
+/**
+ * DatePicker component using react-datepicker
+ *
+ * @param {Object} props
+ * @param {Array} props.selectedDates - Array containing selected start and end dates
+ * @param {Function} props.onDateChange - Callback for date selection changes
+ * @param {Array} props.bookedDates - Array of dates that are already booked (will be marked as unavailable)
+ * @param {Array} props.availableDates - Array of dates that are available for booking
+ * @param {Boolean} props.isAddingAvailability - Flag to indicate if calendar is used for adding availability
+ * @param {Boolean} props.debug - Enable debug mode for development
+ */
 const DatePicker = ({
     selectedDates = [],
     onDateChange,
