@@ -44,6 +44,13 @@ const CreateListing = () => {
         })
     }
 
+    else {
+        setFormData({
+            ...formData,
+            [name]: value,
+        })
+    }
+
 
 
 
