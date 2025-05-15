@@ -30,32 +30,47 @@ const CreateListing = () => {
 
     // convert price to number
     if (name === "listingPricePerNight") {
-      setFormData({ 
-        ...formData, 
+      setFormData({
+        ...formData,
         [name]: parseFloat(value) || "",
-     });
+      });
     }
 
     //convert guests to integer
     else if (name === "guestLimit") {
-        setFormData({
-            ...formData,
-            [name]: parseInt(value,10) || 1,
-        })
+      setFormData({
+        ...formData,
+        [name]: parseInt(value, 10) || 1,
+      });
     }
 
+    //regular string values
     else {
-        setFormData({
-            ...formData,
-            [name]: value,
-        })
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
     }
-
-
-
-
-
-
-
   };
+
+  //add image to the array
+
+  const handleAdllImg = () => {
+    if (imageUrls.trim() !== "") {
+      setFormData({
+        ...formData,
+        listingImages: [...formData.listingImages, imageUrls],
+      });
+      setImageUrl("");
+    }
+  };
+
+
+
+
+
+
+
+
+  
 };
