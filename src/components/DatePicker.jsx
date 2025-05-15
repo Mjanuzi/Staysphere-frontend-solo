@@ -1,6 +1,6 @@
-import React, { useCallback, memo, useState, useEffect } from "react";
+import React, { useCallback, memo, useState, useEffect, useMemo } from "react";
 import ReactDatePicker from "react-datepicker";
-import { differenceInCalendarDays } from "date-fns";
+import { differenceInCalendarDays, format, addDays } from "date-fns";
 import "react-datepicker/dist/react-datepicker.css";
 import "./DatePicker.css";
 
@@ -13,8 +13,9 @@ import "./DatePicker.css";
  * @param {Array} props.bookedDates - Array of dates that are already booked (will be marked as unavailable)
  * @param {Array} props.availableDates - Array of dates that are available for booking
  * @param {Boolean} props.isAddingAvailability - Flag to indicate if calendar is used for adding availability
- * @param {Boolean} props.debug - Enable debug mode for development
  * @param {Function} props.onNightCountChange - Optional callback that returns the number of nights selected
+ * @param {Array} props.availableDateStrings - Raw date strings from MongoDB for direct comparison
+ * @param {Function} props.isDateAvailable - Function to check date availability using string comparison
  */
 const DatePicker = ({
   selectedDates = [],
@@ -22,50 +23,156 @@ const DatePicker = ({
   bookedDates = [],
   availableDates = [],
   isAddingAvailability = false,
-  debug = false,
   onNightCountChange = null,
+  availableDateStrings = [],
+  isDateAvailable = null,
 }) => {
-  // Internal night count state (used only if onNightCountChange not provided)
+  // Internal night count state
   const [nightCount, setNightCount] = useState(0);
 
-  // function for date comparison
-  const isSameDay = useCallback((date1, date2) => {
-    if (!date1 || !date2) return false;
-
-    // Make sure both are Date objects
-    const d1 = date1 instanceof Date ? date1 : new Date(date1);
-    const d2 = date2 instanceof Date ? date2 : new Date(date2);
-
-    // Check for valid dates
-    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return false;
-
-    return (
-      d1.getFullYear() === d2.getFullYear() &&
-      d1.getMonth() === d2.getMonth() &&
-      d1.getDate() === d2.getDate()
-    );
+  // Format date to YYYY-MM-DD string (timezone-safe)
+  const formatDateString = useCallback((date) => {
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) return null;
+    return format(date, "yyyy-MM-dd");
   }, []);
+
+  // Parse string dates to Date objects with timezone handling
+  const parseStringToDate = useCallback((dateStr) => {
+    if (!dateStr || typeof dateStr !== "string") return null;
+
+    try {
+      // For LocalDate style strings (YYYY-MM-DD)
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        // Force noon UTC to avoid timezone issues
+        return new Date(`${dateStr}T12:00:00Z`);
+      }
+
+      // Fallback to standard Date constructor
+      const date = new Date(dateStr);
+      return isNaN(date.getTime()) ? null : date;
+    } catch (e) {
+      return null;
+    }
+  }, []);
+
+  // Create a date lookup for fast checking
+  const availableDatesLookup = useMemo(() => {
+    const lookup = new Set();
+
+    // Add all the date strings
+    if (availableDateStrings?.length > 0) {
+      availableDateStrings.forEach((dateStr) => {
+        if (dateStr) lookup.add(dateStr);
+      });
+    }
+
+    // Also add formatted dates from the availableDates array
+    if (availableDates?.length > 0) {
+      availableDates.forEach((date) => {
+        if (date instanceof Date && !isNaN(date.getTime())) {
+          lookup.add(formatDateString(date));
+        }
+      });
+    }
+
+    return lookup;
+  }, [availableDateStrings, availableDates, formatDateString]);
 
   // Parse dates to ensure they're Date objects
-  const parseDates = useCallback((dates) => {
-    if (!dates || !Array.isArray(dates)) return [];
+  const ensureDates = useCallback(
+    (dates) => {
+      if (!dates || !Array.isArray(dates)) return [];
 
-    return dates
-      .map((date) => {
-        if (!date) return null;
-        return date instanceof Date ? date : new Date(date);
-      })
-      .filter((date) => date instanceof Date && !isNaN(date.getTime()));
-  }, []);
+      return dates
+        .map((date) => {
+          if (!date) return null;
+          if (date instanceof Date) return date;
+          if (typeof date === "string") return parseStringToDate(date);
+          return null;
+        })
+        .filter((date) => date !== null && !isNaN(date.getTime()));
+    },
+    [parseStringToDate]
+  );
 
-  // Parse all date arrays
-  const parsedSelectedDates = parseDates(selectedDates);
-  const parsedBookedDates = parseDates(bookedDates);
-  const parsedAvailableDates = parseDates(availableDates);
+  // date arrays - memoize
+  const parsedSelectedDates = useMemo(
+    () => ensureDates(selectedDates),
+    [selectedDates, ensureDates]
+  );
+
+  const parsedBookedDates = useMemo(
+    () => ensureDates(bookedDates),
+    [bookedDates, ensureDates]
+  );
+
+  //compare dates for equal
+  const areDatesEqual = useCallback(
+    (date1, date2) => {
+      if (!date1 || !date2) return false;
+      const str1 = formatDateString(date1);
+      const str2 = formatDateString(date2);
+      return str1 === str2 && str1 !== null;
+    },
+    [formatDateString]
+  );
+
+  // Check if a date is available
+  const isDateInAvailableDates = useCallback(
+    (date) => {
+      if (!date || !(date instanceof Date) || isNaN(date.getTime()))
+        return false;
+
+      // First try with provided isDateAvailable function
+      if (isDateAvailable && typeof isDateAvailable === "function") {
+        return isDateAvailable(date);
+      }
+
+      // Then use our internal lookup which is faster
+      const dateString = formatDateString(date);
+      return dateString && availableDatesLookup.has(dateString);
+    },
+    [isDateAvailable, formatDateString, availableDatesLookup]
+  );
+
+  // Check if a date is booked
+  const isDateBooked = useCallback(
+    (date) =>
+      parsedBookedDates.some((bookedDate) => areDatesEqual(date, bookedDate)),
+    [parsedBookedDates, areDatesEqual]
+  );
+
+  // Find last available date in current selection range
+  const findLastAvailableDate = useCallback(() => {
+    const selectedStartDate = parsedSelectedDates[0];
+    if (!selectedStartDate || !isDateInAvailableDates(selectedStartDate))
+      return null;
+
+    // Find the latest available date that's consecutive with our selected date
+    let lastAvailableDate = selectedStartDate;
+    let currentDate;
+
+    for (let i = 1; i <= 30; i++) {
+      // Check up to 30 days ahead
+      currentDate = addDays(selectedStartDate, i);
+
+      if (isDateInAvailableDates(currentDate)) {
+        // If days are consecutive, update the last available date
+        if (areDatesEqual(currentDate, addDays(lastAvailableDate, 1))) {
+          lastAvailableDate = currentDate;
+        } else {
+          break; // Found a gap, stop looking
+        }
+      } else {
+        break; // Found a non-available date, stop looking
+      }
+    }
+
+    return lastAvailableDate;
+  }, [parsedSelectedDates, isDateInAvailableDates, areDatesEqual]);
 
   // Calculate nights when both dates are selected
   useEffect(() => {
-    // Only calculate when we have both start and end dates
     if (
       parsedSelectedDates.length === 2 &&
       parsedSelectedDates[0] &&
@@ -74,80 +181,69 @@ const DatePicker = ({
       const startDate = parsedSelectedDates[0];
       const endDate = parsedSelectedDates[1];
 
-      // Ensure end date is after start date
       if (endDate > startDate) {
         const nights = differenceInCalendarDays(endDate, startDate);
-
-        // Update internal state
         setNightCount(nights);
-
-        // Notify parent if callback provided
-        if (onNightCountChange) {
-          onNightCountChange(nights);
-        }
-      } else if (onNightCountChange) {
-        // If end date is before or same as start date, set nights to 0
-        onNightCountChange(0);
+        if (onNightCountChange) onNightCountChange(nights);
+      } else {
         setNightCount(0);
+        if (onNightCountChange) onNightCountChange(0);
       }
     } else {
-      // Reset night count when no dates or only one date is selected
       setNightCount(0);
-      if (onNightCountChange) {
-        onNightCountChange(0);
-      }
+      if (onNightCountChange) onNightCountChange(0);
     }
   }, [parsedSelectedDates, onNightCountChange]);
 
-  // Conditionally log debug information
-  if (debug) {
-    console.log("DatePicker - Date Data:", {
-      selectedDates,
-      availableDates: availableDates.length,
-      bookedDates: bookedDates.length,
-      nightCount,
-      parsedSelectedDates,
-      parsedAvailableDates:
-        parsedAvailableDates.length > 0
-          ? parsedAvailableDates
-              .slice(0, 3)
-              .map((d) => d.toISOString().split("T")[0]) + "..."
-          : "none",
-    });
-  }
-
-  // Helper function to determine if a date should be disabled
+  // Determine if a date should be disabled
   const isDateDisabled = useCallback(
     (date) => {
-      if (!date) return true;
+      if (!date || !(date instanceof Date) || isNaN(date.getTime()))
+        return true;
 
-      // Past dates are always disabled
+      // Disable past dates
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       if (date < today) return true;
 
-      // If it's a booked date, disable it
-      if (parsedBookedDates.some((bookedDate) => isSameDay(bookedDate, date))) {
-        return true;
-      }
+      // Disable booked dates
+      if (isDateBooked(date)) return true;
 
-      // If we're in booking mode (not adding availability)
-      if (!isAddingAvailability) {
-        // If there are available dates and this date is not in that list, disable it
-        if (parsedAvailableDates.length > 0) {
-          const isAvailable = parsedAvailableDates.some((availableDate) =>
-            isSameDay(availableDate, date)
-          );
-          return !isAvailable;
+      // Special case: checkout date selection
+      if (parsedSelectedDates.length === 1 && parsedSelectedDates[0]) {
+        const startDate = parsedSelectedDates[0];
+        const nextDay = addDays(startDate, 1);
+
+        if (areDatesEqual(date, nextDay)) {
+          // Check if the start date was the last available date
+          const lastAvailableDate = findLastAvailableDate();
+
+          if (
+            lastAvailableDate &&
+            areDatesEqual(startDate, lastAvailableDate)
+          ) {
+            return false; // Allow checkout on next day after last available date
+          }
+
+          // Otherwise, checkout date must also be available
+          return !isDateInAvailableDates(date);
         }
       }
 
-      return false;
+      // Standard availability check
+      return !isAddingAvailability && !isDateInAvailableDates(date);
     },
-    [parsedBookedDates, parsedAvailableDates, isAddingAvailability, isSameDay]
+    [
+      parsedSelectedDates,
+      isDateBooked,
+      isDateInAvailableDates,
+      areDatesEqual,
+      isAddingAvailability,
+      findLastAvailableDate,
+    ]
   );
 
-  // Handle date changes with validation
+  // Handle date changes
   const handleDateChange = useCallback(
     (dates) => {
       if (!dates) {
@@ -155,58 +251,73 @@ const DatePicker = ({
         return;
       }
 
-      // If it's an array with start and end dates
-      if (Array.isArray(dates)) {
-        const [start, end] = dates;
+      // Normalize dates array
+      let newDates = Array.isArray(dates) ? [...dates] : [dates];
 
-        // Basic validation for start and end dates
-        if (start && end && end < start) {
-          // If end date is before start date, only keep the start date
+      // Handle range selection
+      if (newDates.length === 2 && newDates[0] && newDates[1]) {
+        const [start, end] = newDates;
+
+        // Basic validation for start before end
+        if (end < start) {
           onDateChange([start]);
           return;
         }
 
-        onDateChange(dates);
+        // Check every date in the range (except checkout day)
+        let currentDate = new Date(start);
+        while (currentDate < end) {
+          if (isDateDisabled(currentDate)) {
+            onDateChange([end]);
+            return;
+          }
+
+          // Move to next day
+          currentDate = addDays(currentDate, 1);
+        }
       }
-      // If it's a single date (or first selection in a range)
-      else if (dates instanceof Date) {
-        onDateChange([dates]);
-      }
+
+      onDateChange(newDates);
     },
-    [onDateChange]
+    [onDateChange, isDateDisabled]
   );
 
-  // Determine if we're selecting a range or a single date
-  const selectsRange = true; // Always use range selection for consistency
-
-  // Day class name calculator
+  // Day class name calculator for styling
   const getDayClassName = useCallback(
     (date) => {
       const classes = [];
 
-      // Mark available dates with a special class
-      if (
-        !isAddingAvailability &&
-        parsedAvailableDates.length > 0 &&
-        parsedAvailableDates.some((availableDate) =>
-          isSameDay(availableDate, date)
-        )
-      ) {
+      // Mark available dates
+      if (isDateInAvailableDates(date)) {
         classes.push("available-date");
       }
 
-      const isStartDate =
-        parsedSelectedDates[0] && isSameDay(date, parsedSelectedDates[0]);
+      // Special class for day after a selected start date
+      if (parsedSelectedDates.length === 1 && parsedSelectedDates[0]) {
+        const nextDay = addDays(parsedSelectedDates[0], 1);
+        if (areDatesEqual(date, nextDay)) {
+          classes.push("checkout-date");
+        }
+      }
 
-      const isEndDate =
-        parsedSelectedDates[1] && isSameDay(date, parsedSelectedDates[1]);
+      // Start/end date classes
+      if (
+        parsedSelectedDates[0] &&
+        areDatesEqual(date, parsedSelectedDates[0])
+      ) {
+        classes.push("start-date");
+      }
 
-      if (isStartDate) classes.push("start-date");
-      if (isEndDate) classes.push("end-date");
+      if (
+        parsedSelectedDates[1] &&
+        areDatesEqual(date, parsedSelectedDates[1])
+      ) {
+        classes.push("end-date");
+      }
 
       return classes.join(" ");
     },
-    [parsedSelectedDates, parsedAvailableDates, isAddingAvailability, isSameDay]
+    [parsedSelectedDates, isDateInAvailableDates, areDatesEqual]
   );
 
   return (
@@ -216,7 +327,7 @@ const DatePicker = ({
         onChange={handleDateChange}
         startDate={parsedSelectedDates[0] || null}
         endDate={parsedSelectedDates[1] || null}
-        selectsRange={selectsRange}
+        selectsRange={true}
         inline
         monthsShown={1}
         filterDate={(date) => !isDateDisabled(date)}
@@ -224,6 +335,9 @@ const DatePicker = ({
         calendarClassName="staysphere-calendar"
         dayClassName={getDayClassName}
       />
+      {parsedSelectedDates.length === 1 && (
+        <div className="date-picker-hint">Please select a checkout date</div>
+      )}
     </div>
   );
 };

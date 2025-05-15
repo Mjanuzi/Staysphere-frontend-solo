@@ -1,10 +1,94 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import axios from "axios";
 import DatePicker from "../components/DatePicker";
+import { format, addDays, subDays } from "date-fns";
 
 import "./ListingDetail.css";
+
+/**
+ * Helper function to normalize date format to YYYY-MM-DD string
+ * Works with various input formats and ensures consistent output
+ */
+const normalizeDateString = (dateInput) => {
+  if (!dateInput) return null;
+
+  try {
+    // If already in YYYY-MM-DD format, return as is
+    if (
+      typeof dateInput === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/.test(dateInput)
+    ) {
+      return dateInput;
+    }
+
+    // Handle Date objects or string dates
+    let date;
+    if (dateInput instanceof Date) {
+      date = dateInput;
+    } else if (typeof dateInput === "string") {
+      // Extract date part if ISO format
+      if (dateInput.includes("T")) {
+        dateInput = dateInput.split("T")[0];
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+          return dateInput;
+        }
+      }
+      // Create date object
+      date = new Date(dateInput);
+    } else {
+      return null;
+    }
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) return null;
+
+    // Format as YYYY-MM-DD
+    return format(date, "yyyy-MM-dd");
+  } catch (e) {
+    console.error("Error normalizing date:", e);
+    return null;
+  }
+};
+
+/**
+ * Check if dates need timezone correction
+ * This detects the issue where dates from MongoDB are shifted due to timezone differences
+ */
+const needsTimezoneCorrection = () => {
+  // Check if the local timezone is not UTC
+  const timezoneOffset = new Date().getTimezoneOffset();
+
+  // If timezone offset is not 0 (not UTC) and we have a negative offset
+  // (e.g., Europe/Stockholm is UTC+2, so offset is -120 minutes)
+  return timezoneOffset < 0;
+};
+
+/**
+ * Apply timezone correction to the dates
+ * This fixes the issue where dates are incorrectly shifted
+ */
+const applyTimezoneCorrection = (dateStrings) => {
+  if (!dateStrings || !Array.isArray(dateStrings) || dateStrings.length === 0)
+    return [];
+
+  return dateStrings.map((dateStr) => {
+    try {
+      // Parse date string to create a date at noon UTC
+      const date = new Date(`${dateStr}T12:00:00Z`);
+
+      // Correct the date - for positive timezone offset (like UTC+2),
+      // we need to subtract a day to get the correct date
+      const correctedDate = subDays(date, 1);
+
+      // Format back to YYYY-MM-DD
+      return format(correctedDate, "yyyy-MM-dd");
+    } catch (e) {
+      return dateStr; // If there's an error, keep the original string
+    }
+  });
+};
 
 const ListingDetail = () => {
   const { listingId } = useParams();
@@ -23,6 +107,7 @@ const ListingDetail = () => {
   const [bookingError, setBookingError] = useState(null);
   const [availableDates, setAvailableDates] = useState([]);
   const [bookedDates, setBookedDates] = useState([]);
+  const [availableDateStrings, setAvailableDateStrings] = useState([]);
 
   // Fetch listing data and availability
   useEffect(() => {
@@ -31,38 +116,65 @@ const ListingDetail = () => {
       try {
         // Call the API endpoint
         const response = await axios.get(`/api/listing/getbyid/${listingId}`);
-
-        // Set the listing data
         setListing(response.data);
 
-        // Convert available date strings to Date objects
+        // Process available dates
         if (response.data.available && Array.isArray(response.data.available)) {
-          const convertedDates = response.data.available
-            .map((dateStr) => {
-              // Create a new Date object from the date string
-              const date = new Date(dateStr);
-              return date;
-            })
-            .filter((date) => !isNaN(date.getTime())); // Filter out invalid dates
+          const rawDates = response.data.available;
 
-          setAvailableDates(convertedDates);
+          // Normalize dates to consistent YYYY-MM-DD format
+          const normalizedDates = new Set();
+          rawDates.forEach((date) => {
+            const normalized = normalizeDateString(date);
+            if (normalized) normalizedDates.add(normalized);
+          });
+
+          // Convert to arrays for component props
+          let dateStrings = Array.from(normalizedDates);
+
+          // Apply timezone correction if needed
+          const needsCorrection = needsTimezoneCorrection();
+          if (needsCorrection) {
+            dateStrings = applyTimezoneCorrection(dateStrings);
+          }
+
+          // Create Date objects (noon UTC to avoid timezone issues)
+          const dateObjects = dateStrings.map(
+            (dateStr) => new Date(`${dateStr}T12:00:00Z`)
+          );
+
+          // Update state
+          setAvailableDateStrings(dateStrings);
+          setAvailableDates(dateObjects);
         } else {
-          console.log("No availability data found in response");
+          setAvailableDateStrings([]);
           setAvailableDates([]);
         }
 
-        // Extract booked dates if available (same conversion logic)
+        // Process booked dates with the same approach
         if (
           response.data.bookedDates &&
           Array.isArray(response.data.bookedDates)
         ) {
-          const convertedBookedDates = response.data.bookedDates
-            .map((dateStr) => {
-              return new Date(dateStr);
-            })
-            .filter((date) => !isNaN(date.getTime()));
+          const bookedStrings = new Set();
+          response.data.bookedDates.forEach((date) => {
+            const normalized = normalizeDateString(date);
+            if (normalized) bookedStrings.add(normalized);
+          });
 
-          setBookedDates(convertedBookedDates);
+          let bookedDateStrings = Array.from(bookedStrings);
+
+          // Apply timezone correction if needed
+          const needsCorrection = needsTimezoneCorrection();
+          if (needsCorrection) {
+            bookedDateStrings = applyTimezoneCorrection(bookedDateStrings);
+          }
+
+          const bookedObjects = bookedDateStrings.map(
+            (dateStr) => new Date(`${dateStr}T12:00:00Z`)
+          );
+
+          setBookedDates(bookedObjects);
         }
 
         setLoading(false);
@@ -70,8 +182,6 @@ const ListingDetail = () => {
         console.error("Error fetching listing:", err);
         setError("Failed to load listing details. Please try again later.");
         setLoading(false);
-
-        // Fallback for development (no longer needed with working API)
       }
     };
 
@@ -79,14 +189,29 @@ const ListingDetail = () => {
   }, [listingId]);
 
   // Handle night count changes from the DatePicker
-  const handleNightCountChange = (nights) => {
-    setNumberOfNights(nights);
-    if (listing && nights > 0) {
-      setTotalPrice(nights * listing.listingPricePerNight);
-    } else {
-      setTotalPrice(0);
-    }
-  };
+  const handleNightCountChange = useCallback(
+    (nights) => {
+      setNumberOfNights(nights);
+      if (listing && nights > 0) {
+        setTotalPrice(nights * listing.listingPricePerNight);
+      } else {
+        setTotalPrice(0);
+      }
+    },
+    [listing]
+  );
+
+  // Check if a date is available using string comparison
+  const isDateAvailable = useCallback(
+    (date) => {
+      if (!date) return false;
+      // Format the date consistently
+      const dateString = format(date, "yyyy-MM-dd");
+      // Compare against our normalized available dates
+      return availableDateStrings.includes(dateString);
+    },
+    [availableDateStrings]
+  );
 
   // Handle booking creation
   const handleBooking = async () => {
@@ -186,7 +311,8 @@ const ListingDetail = () => {
           bookedDates={bookedDates}
           availableDates={availableDates}
           onNightCountChange={handleNightCountChange}
-          debug={false}
+          availableDateStrings={availableDateStrings}
+          isDateAvailable={isDateAvailable}
         />
 
         {numberOfNights > 0 && (

@@ -5,6 +5,18 @@
   margin-bottom: 20px;
 }
 
+/* User guidance hint */
+.date-picker-hint {
+  margin-top: 8px;
+  padding: 8px;
+  font-size: 14px;
+  color: #666;
+  background-color: #f8f8f8;
+  border-radius: 4px;
+  text-align: center;
+  border-left: 3px solid #222;
+}
+
 /* Override react-datepicker styles to match our design */
 .staysphere-calendar {
   width: 100% !important;
@@ -98,14 +110,30 @@
 .react-datepicker__day.available-date:not(.react-datepicker__day--selected):not(
     .react-datepicker__day--in-range
   ) {
-  background-color: rgba(0, 128, 0, 0.1) !important;
+  background-color: rgba(0, 128, 0, 0.15) !important;
   position: relative !important;
+  border: 1px solid rgba(0, 128, 0, 0.3) !important;
 }
 
 .react-datepicker__day.available-date:not(.react-datepicker__day--selected):not(
     .react-datepicker__day--in-range
   ):hover {
-  background-color: rgba(0, 128, 0, 0.2) !important;
+  background-color: rgba(0, 128, 0, 0.25) !important;
+}
+
+/* Checkout date styling - highlight the day after selected start date */
+.react-datepicker__day.checkout-date:not(.react-datepicker__day--selected):not(
+    .react-datepicker__day--disabled
+  ) {
+  background-color: rgba(34, 34, 34, 0.1) !important;
+  border: 1px dashed #222 !important;
+  font-weight: bold !important;
+}
+
+.react-datepicker__day.checkout-date:not(.react-datepicker__day--selected):not(
+    .react-datepicker__day--disabled
+  ):hover {
+  background-color: rgba(34, 34, 34, 0.2) !important;
 }
 
 /* Today styling */
