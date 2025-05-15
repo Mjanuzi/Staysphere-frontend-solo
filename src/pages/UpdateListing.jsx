@@ -13,4 +13,7 @@ const UpdateListing = () => {
     const navigate = useNavigate();
     const {listingId} = useParams();
     const {userId} = useAuth();
+    const [loading, setLoading] = useState(false);
+    const[fetchLoading, setFetchLoading] = useState(true);
+    const[errorMessage,SetErrorMessage] = useState("");
 }
