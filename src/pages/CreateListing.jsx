@@ -65,6 +65,15 @@ const CreateListing = () => {
     }
   };
 
+  //remove img fron the array
+  const handleRemoveImg = (index) => {
+    const updatedImgs = [...formData.listingImages];
+    updatedImgs.splice(index,1);
+    setFormData({
+        ...formData,
+        listingImages: updatedImgs,
+    })
+  }
 
 
 
@@ -72,5 +81,6 @@ const CreateListing = () => {
 
 
 
-  
+
+
 };
