@@ -276,8 +276,8 @@ const UpdateListing = () => {
           >
             Cancel
           </button>
-          <button type="submit" className="submit-button" disabled={loading}>
-            {loading ? "Updating..." : "Update Listing"}
+          <button type="submit" className="submit-button" disabled={isUpdating}>
+            {isUpdating ? "Updating..." : "Update Listing"}
           </button>
         </div>
       </form>
