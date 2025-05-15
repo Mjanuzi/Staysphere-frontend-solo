@@ -68,19 +68,34 @@ const CreateListing = () => {
   //remove img fron the array
   const handleRemoveImg = (index) => {
     const updatedImgs = [...formData.listingImages];
-    updatedImgs.splice(index,1);
+    updatedImgs.splice(index, 1);
     setFormData({
-        ...formData,
-        listingImages: updatedImgs,
-    })
+      ...formData,
+      listingImages: updatedImgs,
+    });
+  };
+
+  //submit form
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  };
+
+  //validate form
+  if (!formData.listingTitle.trim()) {
+    setErrorMessage("Listing title is required");
+    return;
   }
-
-
-
-
-
-
-
-
-
+  if (!formData.listingDescription.trim()) {
+    setErrorMessage("Description is required");
+    return;
+  }
+  if (!formData.listingPricePerNight || formData.listingPricePerNight <= 0) {
+    setErrorMessage("Valid price per night is required");
+    return;
+  }
+  if (!formData.guestLimit || formData.guestLimit <= 0) {
+    setErrorMessage("Guest limit must be at least 1");
+    return;
+  }
 };
