@@ -159,3 +159,8 @@ const [formData, setFormData] = useState({
           setLoading(false);
         }
       };
+      
+      if (fetchLoading) {
+        return <div className="loading-state">Loading listing details...</div>;
+      }
+    
