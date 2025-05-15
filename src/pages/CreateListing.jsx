@@ -24,7 +24,10 @@ const CreateListing = () => {
   // Image URLs state for tracking multiple image URLs
   const [imageUrls, setImageUrl] = useState([]);
 
-
+  //handle input changes
+  const handleChange =(e) => {
+    const {name, value} = e.target;
+  }
 
 
 
