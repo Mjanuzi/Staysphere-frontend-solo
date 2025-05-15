@@ -214,7 +214,7 @@ const CreateListing = () => {
         <div className="form-action">
           <button
             type="button"
-            onClick={() => navigate("profile")}
+            onClick={() => navigate("/profile")}
             className="cancel-button"
             disabled={loading}
           >

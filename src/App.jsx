@@ -9,6 +9,7 @@ import Unauthorized from "./pages/Unauthorized";
 import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "./contexts/auth/AuthContext";
 import Layout from "./components/layout/Layout";
+import CreateListing from "./pages/CreateListing";
 
 function App() {
   return (
@@ -26,7 +27,10 @@ function App() {
             {/* protected routes for all authenticated users */}
             <Route element={<ProtectedRoute />}>
               <Route path="/profile" element={<Profile />} />
+              <Route path="/create-listing" element={<CreateListing />} />
             </Route>
+          
+            
 
             {/* protected routes for admins only */}
             <Route element={<ProtectedRoute requiredRoles={["ADMIN"]} />}>
