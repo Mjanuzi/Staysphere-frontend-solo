@@ -143,6 +143,30 @@ const CreateListing = () => {
             required
           />
         </div>
+
+        <div className="form-group">
+          <label htmlFor="listingPricePerNight">Price Per Night (SEK) *</label>
+          <input
+            type="number"
+            id="listingPricePerNight"
+            name="listingPricePerNight"
+            value={formData.listingPricePerNight}
+            onChange={handleChange}
+            placeholder="Enter a price per night"
+            min="1"
+            step="0.01"
+            required
+          />
+        </div>
+        
+
+
+
+
+
+
+
+
       </form>
     </div>
   );
