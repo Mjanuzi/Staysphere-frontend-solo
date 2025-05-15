@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import DatePicker from "../components/DatePicker";
 import "./ListingDetail.css";
 
-const ListingDetailsPage = () => {
+const ListingDetail = () => {
   const { listingId } = useParams();
   const navigate = useNavigate();
   const { currentUser, userId } = useAuth();
@@ -19,8 +20,7 @@ const ListingDetailsPage = () => {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState(null);
 
-}
-  //Placeholder data
+  // Placeholder data
   useEffect(() => {
     // Simulate API call delay
     setTimeout(() => {
@@ -51,8 +51,8 @@ const ListingDetailsPage = () => {
     }
   }, [selectedDates, listing]);
 
- // Handle booking creation
- const handleBooking = () => {
+  // Handle booking creation
+  const handleBooking = () => {
     // Reset booking status
     setBookingError(null);
     setBookingLoading(true);
@@ -169,5 +169,6 @@ const ListingDetailsPage = () => {
       </section>
     </div>
   );
+};
+
 export default ListingDetail;
-  
