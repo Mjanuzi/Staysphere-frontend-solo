@@ -159,8 +159,125 @@ const [formData, setFormData] = useState({
           setLoading(false);
         }
       };
-      
+
       if (fetchLoading) {
         return <div className="loading-state">Loading listing details...</div>;
       }
-    
+     return (
+    <div className="create-listing-container">
+      <h1>Update Listing</h1>
+
+      {errorMessage && <div className="error-message">{errorMessage}</div>}
+
+      <form onSubmit={handleSubmit} className="create-listing-form">
+        <div className="form-group">
+          <label htmlFor="listingTitle">Listing Title *</label>
+          <input
+            type="text"
+            id="listingTitle"
+            name="listingTitle"
+            value={formData.listingTitle}
+            onChange={handleChange}
+            placeholder="Enter a catchy title for your listing"
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="listingPricePerNight">Price Per Night (USD) *</label>
+          <input
+            type="number"
+            id="listingPricePerNight"
+            name="listingPricePerNight"
+            value={formData.listingPricePerNight}
+            onChange={handleChange}
+            placeholder="Enter price per night"
+            min="1"
+            step="0.01"
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="guestLimit">Guest Limit *</label>
+          <input
+            type="number"
+            id="guestLimit"
+            name="guestLimit"
+            value={formData.guestLimit}
+            onChange={handleChange}
+            placeholder="Enter maximum number of guests"
+            min="1"
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="listingDescription">Description *</label>
+          <textarea
+            id="listingDescription"
+            name="listingDescription"
+            value={formData.listingDescription}
+            onChange={handleChange}
+            placeholder="Describe your property, amenities, and surrounding area"
+            rows="5"
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Images</label>
+          <div className="image-input-container">
+            <input
+              type="text"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="Enter image URL"
+            />
+            <button
+              type="button"
+              onClick={handleAddImage}
+              className="add-image-button"
+            >
+              Add Image
+            </button>
+          </div>
+
+          {formData.listingImages.length > 0 && (
+            <div className="image-preview-container">
+              <h3>Image URLs:</h3>
+              <ul className="image-list">
+                {formData.listingImages.map((url, index) => (
+                  <li key={index} className="image-item">
+                    <span className="image-url">{url}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      className="remove-image-button"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <div className="form-actions">
+          <button
+            type="button"
+            onClick={() => navigate("/profile")}
+            className="cancel-button"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button type="submit" className="submit-button" disabled={loading}>
+            {loading ? "Updating..." : "Update Listing"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+export default UpdateListing;
