@@ -161,7 +161,7 @@ const CreateListing = () => {
 
         <div className="form-group">
           <label htmlFor="listingDescription">Listing Description *</label>
-          <textarea 
+          <textarea
             id="listingDescription"
             name="listingDescription"
             value={formData.listingDescription}
@@ -171,18 +171,61 @@ const CreateListing = () => {
           />
         </div>
 
+        <div className="form-group">
+          <label>Images</label>
+          <div className="image-input-container">
+            <input
+              type="text"
+              value={imageUrls}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="Enter image URLs"
+            />
 
+            <button
+              type="button"
+              onClick={handleAdllImg}
+              className="add-image-button"
+            >
+              Add image
+            </button>
+          </div>
 
-        
+          {formData.listingImages.length > 0 && (
+            <div className="image-preview-container">
+              <h3>Image URLs</h3>
+              <ul className="image-list">
+                {formData.listingImages.map((url, index) => (
+                  <li key={index} className="image-item">
+                    <span className="image-url">{url}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImg(index)}
+                      className="remove-image-button"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
 
-
-
-
-
-
-
-
+        <div className="form-action">
+          <button
+            type="button"
+            onClick={() => navigate("profile")}
+            className="cancel-button"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button type="submit" className="sumbit-button" disabled={loading}>
+            {loading ? "Creating..." : "Create Listing"}
+          </button>
+        </div>
       </form>
     </div>
   );
 };
+export default CreateListing;
