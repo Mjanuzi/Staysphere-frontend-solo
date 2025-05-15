@@ -26,6 +26,39 @@ const [formData, setFormData] = useState({
     guestLimit: 1,
     listingImages: [],
   });
-  
+
   // Image URLs state for tracking multiple image URLs
   const [imageUrl, setImageUrl] = useState("");
+  // Fetch listing data when component mounts
+  useEffect(() => {
+    const fetchListing = async () => {
+      try {
+        setFetchLoading(true);
+        const response = await api.get(`/api/listing/getbyid/${listingId}`);
+        const listingData = response.data;
+
+        // Set form data from listing
+        setFormData({
+          hostId: listingData.hostId,
+          listingTitle: listingData.listingTitle,
+          listingDescription: listingData.listingDescription,
+          listingPricePerNight: listingData.listingPricePerNight,
+          guestLimit: listingData.guestLimit,
+          listingImages: listingData.listingImages || [],
+        });
+      } catch (error) {
+        console.error("Error fetching listing:", error);
+        setErrorMessage(
+          error.response?.data?.message ||
+            "Failed to fetch listing details. Please try again."
+        );
+      } finally {
+        setFetchLoading(false);
+      }
+    };
+
+    if (listingId) {
+      fetchListing();
+    }
+  }, [listingId]);
+
