@@ -79,55 +79,71 @@ const CreateListing = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
 
-  //validate form
-  if (!formData.listingTitle.trim()) {
-    setErrorMessage("Listing title is required");
-    return;
-  }
-  if (!formData.listingDescription.trim()) {
-    setErrorMessage("Description is required");
-    return;
-  }
-  if (!formData.listingPricePerNight || formData.listingPricePerNight <= 0) {
-    setErrorMessage("Valid price per night is required");
-    return;
-  }
-  if (!formData.guestLimit || formData.guestLimit <= 0) {
-    setErrorMessage("Guest limit must be at least 1");
-    return;
-  }
+    //validate form
+    if (!formData.listingTitle.trim()) {
+      setErrorMessage("Listing title is required");
+      return;
+    }
+    if (!formData.listingDescription.trim()) {
+      setErrorMessage("Description is required");
+      return;
+    }
+    if (!formData.listingPricePerNight || formData.listingPricePerNight <= 0) {
+      setErrorMessage("Valid price per night is required");
+      return;
+    }
+    if (!formData.guestLimit || formData.guestLimit <= 0) {
+      setErrorMessage("Guest limit must be at least 1");
+      return;
+    }
 
-  try {
-    setLoading(true);
-    setErrorMessage("");
+    try {
+      setLoading(true);
+      setErrorMessage("");
 
-    //checking if hostid is set to the current user
-    const submissionData = {
+      //checking if hostid is set to the current user
+      const submissionData = {
         ...formData,
         hostId: userId,
-    };
+      };
 
-    //Send the data to the server
-    const response = await api.post("/api/listing/create", submissionData);
+      //Send the data to the server
+      const response = await api.post("/api/listing/create", submissionData);
 
-    // navigate to profile page if successful
-    navigate("/profile");
+      // navigate to profile page if successful
+      navigate("/profile");
+    } catch (error) {
+      console.error("Error creating listing:", error);
+      setErrorMessage(
+        error.response?.data?.message ||
+          "Failed to create listing. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-}catch (error){
-    console.error("Error creating listing:", error);
-    setErrorMessage(
-        error.response?.data?.message || "Failed to create listing. Please try again."
-    );
-}finally{
-    setLoading(false);
-}
-};
+  return (
+    <div className="create-listing-container">
+      <h1>Create New Listing</h1>
 
+      {errorMessage && <div className="error-message">{errorMessage}</div>}
 
-
-
-
-
+      <form onSubmit={handleSubmit} className="create-listing-form">
+        <div className="form-group">
+          <label htmlFor="listingTitle">Listing Title *</label>
+          <input
+            type="text"
+            id="listingTitle"
+            name="listingTitle"
+            value={formData.listingTitle}
+            onChange={handleChange}
+            placeholder="Enter a title for your listing"
+            required
+          />
+        </div>
+      </form>
+    </div>
+  );
 };
