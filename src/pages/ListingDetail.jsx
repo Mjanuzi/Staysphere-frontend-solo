@@ -107,7 +107,10 @@ const ListingDetail = () => {
   const [bookingError, setBookingError] = useState(null);
   const [availableDates, setAvailableDates] = useState([]);
   const [bookedDates, setBookedDates] = useState([]);
+<<<<<<< HEAD
   const [availableDateStrings, setAvailableDateStrings] = useState([]);
+=======
+>>>>>>> 6d445200a9137c6fa0f10dfbea0933b66f9ad731
 
   // Fetch listing data and availability
   useEffect(() => {
@@ -116,6 +119,7 @@ const ListingDetail = () => {
       try {
         // Call the API endpoint
         const response = await axios.get(`/api/listing/getbyid/${listingId}`);
+<<<<<<< HEAD
         setListing(response.data);
 
         // Process available dates
@@ -152,10 +156,33 @@ const ListingDetail = () => {
         }
 
         // Process booked dates with the same approach
+=======
+
+        // Set the listing data
+        setListing(response.data);
+
+        // Convert available date strings to Date objects
+        if (response.data.available && Array.isArray(response.data.available)) {
+          const convertedDates = response.data.available
+          .map((dateStr) => {
+            // Parse as UTC by appending 'Z' to the date string
+            return new Date(dateStr + 'T00:00:00Z'); 
+          })
+          .filter((date) => !isNaN(date.getTime())); // Filter out invalid dates
+
+          setAvailableDates(convertedDates);
+        } else {
+          console.log("No availability data found in response");
+          setAvailableDates([]);
+        }
+
+        // Extract booked dates if available (same conversion logic)
+>>>>>>> 6d445200a9137c6fa0f10dfbea0933b66f9ad731
         if (
           response.data.bookedDates &&
           Array.isArray(response.data.bookedDates)
         ) {
+<<<<<<< HEAD
           const bookedStrings = new Set();
           response.data.bookedDates.forEach((date) => {
             const normalized = normalizeDateString(date);
@@ -175,6 +202,16 @@ const ListingDetail = () => {
           );
 
           setBookedDates(bookedObjects);
+=======
+          const convertedBookedDates = response.data.bookedDates
+            .map((dateStr) => {
+              // Parse as UTC by appending 'Z' here too
+              return new Date(dateStr + 'T00:00:00Z'); 
+            })
+            .filter((date) => !isNaN(date.getTime()));
+        
+          setBookedDates(convertedBookedDates);
+>>>>>>> 6d445200a9137c6fa0f10dfbea0933b66f9ad731
         }
 
         setLoading(false);
@@ -182,6 +219,11 @@ const ListingDetail = () => {
         console.error("Error fetching listing:", err);
         setError("Failed to load listing details. Please try again later.");
         setLoading(false);
+<<<<<<< HEAD
+=======
+
+        // Fallback for development (no longer needed with working API)
+>>>>>>> 6d445200a9137c6fa0f10dfbea0933b66f9ad731
       }
     };
 
@@ -189,6 +231,7 @@ const ListingDetail = () => {
   }, [listingId]);
 
   // Handle night count changes from the DatePicker
+<<<<<<< HEAD
   const handleNightCountChange = useCallback(
     (nights) => {
       setNumberOfNights(nights);
@@ -212,6 +255,16 @@ const ListingDetail = () => {
     },
     [availableDateStrings]
   );
+=======
+  const handleNightCountChange = (nights) => {
+    setNumberOfNights(nights);
+    if (listing && nights > 0) {
+      setTotalPrice(nights * listing.listingPricePerNight);
+    } else {
+      setTotalPrice(0);
+    }
+  };
+>>>>>>> 6d445200a9137c6fa0f10dfbea0933b66f9ad731
 
   // Handle booking creation
   const handleBooking = async () => {
@@ -311,8 +364,12 @@ const ListingDetail = () => {
           bookedDates={bookedDates}
           availableDates={availableDates}
           onNightCountChange={handleNightCountChange}
+<<<<<<< HEAD
           availableDateStrings={availableDateStrings}
           isDateAvailable={isDateAvailable}
+=======
+          debug={false}
+>>>>>>> 6d445200a9137c6fa0f10dfbea0933b66f9ad731
         />
 
         {numberOfNights > 0 && (
