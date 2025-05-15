@@ -62,3 +62,31 @@ const [formData, setFormData] = useState({
     }
   }, [listingId]);
 
+  
+   // Handle input changes
+   const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    // Convert price to number
+    if (name === "listingPricePerNight") {
+      setFormData({
+        ...formData,
+        [name]: parseFloat(value) || "",
+      });
+    }
+    // Convert guest limit to integer
+    else if (name === "guestLimit") {
+      setFormData({
+        ...formData,
+        [name]: parseInt(value, 10) || 1,
+      });
+    }
+    // Regular string fields
+    else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
+  };
+
