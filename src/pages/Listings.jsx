@@ -16,10 +16,18 @@ const Listings = () => {
 
   // Helper function to generate image URL based on the listing
   const getImageUrl = (listing) => {
+
+    // a default img url if no images
+    const defaultImage = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=500&auto=format&fit=crop";
     if (!listing) {
-      return "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=500&auto=format&fit=crop";
+      return defaultImage;
     }
-    return listing.getImageUrl || "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=500&auto=format&fit=crop";
+    // Check if the listing has images array and it's not empty
+    if (listing.listingImages && listing.listingImages.length > 0){
+      return listing.listingImages[0];
+    }
+    //back to default if no images are found
+    return defaultImage;
   };
 
   //When refreshing the page, fetching all listings

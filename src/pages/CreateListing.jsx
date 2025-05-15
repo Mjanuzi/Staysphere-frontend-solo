@@ -25,7 +25,7 @@ const CreateListing = () => {
   });
 
   // Image URLs state for tracking multiple image URLs
-  const [imageUrls, setImageUrl] = useState([]);
+  const [imageUrls, setImageUrl] = useState("");
 
   //handle input changes
   const handleChange = (e) => {
@@ -58,7 +58,7 @@ const CreateListing = () => {
 
   //add image to the array
 
-  const handleAdllImg = () => {
+  const handleAddlImg = () => {
     if (imageUrls.trim() !== "") {
       setFormData({
         ...formData,
@@ -206,7 +206,7 @@ const CreateListing = () => {
 
             <button
               type="button"
-              onClick={handleAdllImg}
+              onClick={handleAddlImg}
               className="add-image-button"
             >
               Add image
