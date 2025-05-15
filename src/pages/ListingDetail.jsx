@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+
 import DatePicker from "../components/DatePicker";
+
 import "./ListingDetail.css";
 
 const ListingDetail = () => {
@@ -20,7 +22,8 @@ const ListingDetail = () => {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState(null);
 
-  // Placeholder data
+}
+
   useEffect(() => {
     // Simulate API call delay
     setTimeout(() => {
@@ -53,6 +56,7 @@ const ListingDetail = () => {
 
   // Handle booking creation
   const handleBooking = () => {
+
     // Reset booking status
     setBookingError(null);
     setBookingLoading(true);
