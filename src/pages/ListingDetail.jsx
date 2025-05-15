@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-
+import axios from "axios";
 import DatePicker from "../components/DatePicker";
 
 import "./ListingDetail.css";
@@ -21,40 +21,75 @@ const ListingDetail = () => {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState(null);
+  const [availableDates, setAvailableDates] = useState([]);
+  const [bookedDates, setBookedDates] = useState([]);
 
+  // Fetch listing data and availability
   useEffect(() => {
-    // Simulate API call delay
-    setTimeout(() => {
-      setListing({
-        listingId: "placeholder-123",
-        listingTitle: "Placeholder Listing Title",
-        location: "Stockholm, Sweden",
-        listingPricePerNight: 1200,
-        description: "This is a placeholder description for this listing.",
-      });
-      setLoading(false);
-    }, 1000);
+    const fetchListingData = async () => {
+      setLoading(true);
+      try {
+        // Call the API endpoint
+        const response = await axios.get(`/api/listing/getbyid/${listingId}`);
+
+        // Set the listing data
+        setListing(response.data);
+
+        // Convert available date strings to Date objects
+        if (response.data.available && Array.isArray(response.data.available)) {
+          const convertedDates = response.data.available
+            .map((dateStr) => {
+              // Create a new Date object from the date string
+              const date = new Date(dateStr);
+              return date;
+            })
+            .filter((date) => !isNaN(date.getTime())); // Filter out invalid dates
+
+          setAvailableDates(convertedDates);
+        } else {
+          console.log("No availability data found in response");
+          setAvailableDates([]);
+        }
+
+        // Extract booked dates if available (same conversion logic)
+        if (
+          response.data.bookedDates &&
+          Array.isArray(response.data.bookedDates)
+        ) {
+          const convertedBookedDates = response.data.bookedDates
+            .map((dateStr) => {
+              return new Date(dateStr);
+            })
+            .filter((date) => !isNaN(date.getTime()));
+
+          setBookedDates(convertedBookedDates);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching listing:", err);
+        setError("Failed to load listing details. Please try again later.");
+        setLoading(false);
+
+        // Fallback for development (no longer needed with working API)
+      }
+    };
+
+    fetchListingData();
   }, [listingId]);
 
-  // Calculate number of nights and total price when dates change
-  useEffect(() => {
-    if (selectedDates.length === 2 && listing) {
-      const startDate = new Date(selectedDates[0]);
-      const endDate = new Date(selectedDates[1]);
-      const diffTime = Math.abs(endDate - startDate);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      setNumberOfNights(diffDays);
-      setTotalPrice(diffDays * listing.listingPricePerNight);
+  // Handle night count changes from the DatePicker
+  const handleNightCountChange = (nights) => {
+    setNumberOfNights(nights);
+    if (listing && nights > 0) {
+      setTotalPrice(nights * listing.listingPricePerNight);
     } else {
-      setNumberOfNights(0);
       setTotalPrice(0);
     }
-  }, [selectedDates, listing]);
+  };
 
   // Handle booking creation
-  const handleBooking = () => {
-
+  const handleBooking = async () => {
     // Reset booking status
     setBookingError(null);
     setBookingLoading(true);
@@ -67,24 +102,39 @@ const ListingDetail = () => {
       return;
     }
 
-    if (selectedDates.length !== 2) {
+    if (selectedDates.length !== 2 || !selectedDates[0] || !selectedDates[1]) {
       setBookingError("Please select check-in and check-out dates");
       setBookingLoading(false);
       return;
     }
 
-    // Simulate booking process
-    setTimeout(() => {
+    if (numberOfNights <= 0) {
+      setBookingError(
+        "Invalid date selection. Please select a valid date range."
+      );
       setBookingLoading(false);
-      setBookingSuccess(true);
+      return;
+    }
 
-      // Show success message
+    // In a real implementation, submit booking to the API
+    try {
+      // Simulate booking process for now
       setTimeout(() => {
-        // In real app would navigate to profile
-        setBookingSuccess(false);
-        setSelectedDates([]);
-      }, 2000);
-    }, 1500);
+        setBookingLoading(false);
+        setBookingSuccess(true);
+
+        // Show success message
+        setTimeout(() => {
+          // In real app would navigate to profile
+          setBookingSuccess(false);
+          setSelectedDates([]);
+        }, 2000);
+      }, 1500);
+    } catch (err) {
+      console.error("Booking error:", err);
+      setBookingError("Failed to create booking. Please try again.");
+      setBookingLoading(false);
+    }
   };
 
   if (loading) {
@@ -133,16 +183,19 @@ const ListingDetail = () => {
         <DatePicker
           selectedDates={selectedDates}
           onDateChange={setSelectedDates}
-          bookedDates={[]} // Would be populated from API
-          availableDates={[]} // Would be populated from API
+          bookedDates={bookedDates}
+          availableDates={availableDates}
+          onNightCountChange={handleNightCountChange}
+          debug={false}
         />
 
-        {selectedDates.length === 2 && (
+        {numberOfNights > 0 && (
           <div className="booking-summary">
             <h3>Booking Summary</h3>
             <div className="booking-line">
               <span>
-                {listing.listingPricePerNight} kr × {numberOfNights} nights
+                {listing.listingPricePerNight} kr × {numberOfNights}{" "}
+                {numberOfNights === 1 ? "night" : "nights"}
               </span>
               <span>{totalPrice} kr</span>
             </div>
@@ -164,7 +217,7 @@ const ListingDetail = () => {
         <button
           className="reserve-button"
           onClick={handleBooking}
-          disabled={bookingLoading || selectedDates.length !== 2}
+          disabled={bookingLoading || numberOfNights <= 0}
         >
           {bookingLoading ? "Processing..." : "Reserve"}
         </button>
