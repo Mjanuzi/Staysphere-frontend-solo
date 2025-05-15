@@ -12,6 +12,8 @@ import { AuthProvider } from "./contexts/auth/AuthContext";
 import Layout from "./components/layout/Layout";
 import UpdateListing from "./pages/UpdateListing";
 
+import CreateListing from "./pages/CreateListing";
+
 function App() {
   return (
     <BrowserRouter>
@@ -30,11 +32,16 @@ function App() {
             {/* protected routes for all authenticated users */}
             <Route element={<ProtectedRoute />}>
               <Route path="/profile" element={<Profile />} />
+
               <Route
                 path="/update-listing/:listingId"
                 element={<UpdateListing />}
               />
+
+              <Route path="/create-listing" element={<CreateListing />} />
             </Route>
+          
+            
 
             {/* protected routes for admins only */}
             <Route element={<ProtectedRoute requiredRoles={["ADMIN"]} />}>
