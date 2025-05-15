@@ -3,6 +3,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import ListingDetail from "./pages/ListingDetail";
 import Listings from "./pages/Listings";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized";
@@ -22,6 +23,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/listings" element={<Listings />} />
+            <Route path="/listings/:listingId" element={<ListingDetail />} />
 
             {/* protected routes for all authenticated users */}
             <Route element={<ProtectedRoute />}>
