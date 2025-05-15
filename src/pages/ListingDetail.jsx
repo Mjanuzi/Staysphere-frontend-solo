@@ -22,8 +22,6 @@ const ListingDetail = () => {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState(null);
 
-}
-
   useEffect(() => {
     // Simulate API call delay
     setTimeout(() => {
