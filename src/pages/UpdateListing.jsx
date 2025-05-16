@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import api from "../api/axios";
 import "./CreateListing.css"; // Reuse the same styling
-
+import {useListingApi}from "../hooks/useListingsApi";
+import { updateListing } from "../api/listingService";
 /**
  * UpdateListing Component
  *
@@ -37,7 +38,7 @@ const UpdateListing = () => {
         setFetchLoading(true);
         const response = await api.get(`/api/listing/getbyid/${listingId}`);
         const listingData = response.data;
-
+        
         // Set form data from listing
         setFormData({
           hostId: listingData.hostId,
@@ -147,18 +148,22 @@ const UpdateListing = () => {
       };
 
       // Send the data to the server
-      await api.patch(`/api/listing/patch/${listingId}`, submissionData);
-
-      // If successful, navigate to profile page
-      navigate("/profile");
+      //await api.patch(`/api/listing/patch/${listingId}`, submissionData);
+      updateListing(submissionData, {
+        onSuccess: () => {
+          console.log("Listing Update successfully");
+          navigate("/profile");
+        },
+        onError: (error) => {
+          console.error("Error in mutation:", error);
+          setErrorMessage(
+            error.message || "Failed to Update listing. Please try again."
+          );
+        },
+      });
     } catch (error) {
-      console.error("Error updating listing:", error);
-      setErrorMessage(
-        error.response?.data?.message ||
-          "Failed to update listing. Please try again."
-      );
-    } finally {
-      setLoading(false);
+      console.error("Error Update listing:", error);
+      setErrorMessage("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -272,7 +277,8 @@ const UpdateListing = () => {
             type="button"
             onClick={() => navigate("/profile")}
             className="cancel-button"
-            disabled={loading}
+            disabled={isUpdating}
+            //commit
           >
             Cancel
           </button>
