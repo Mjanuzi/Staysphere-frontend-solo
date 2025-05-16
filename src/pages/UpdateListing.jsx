@@ -3,12 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import api from "../api/axios";
 import "./CreateListing.css"; // Reuse the same styling
-
-import {useListingsApi}from "../hooks/useListingsApi";
-
 import { useListingsApi } from "../hooks/useListingsApi";
-
-import { updateListing } from "../api/listingService";
 /**
  * UpdateListing Component
  *
@@ -21,6 +16,8 @@ const UpdateListing = () => {
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const {updateListing, isUpdating} =useListingsApi();
+  
   
 
   // Form state
@@ -151,6 +148,8 @@ const UpdateListing = () => {
         ...formData,
         hostId: userId,
       };
+
+      console.log("Updating listing with data: ", submissionData);
 
       // Send the data to the server
       //await api.patch(`/api/listing/patch/${listingId}`, submissionData);
