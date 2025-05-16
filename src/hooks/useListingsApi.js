@@ -4,9 +4,10 @@ import {
   useQueryClient,
   useInfiniteQuery,
 } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useAuth } from "./useAuth";
 import listingService from "../api/listingService";
+import axios from "axios";
 
 /**
  * hook for accessing and managing listings data using React Query
@@ -30,6 +31,9 @@ export const useListingsApi = (options = {}) => {
 
   const queryClient = useQueryClient();
   const { userId, currentUser } = useAuth();
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Base hook for fetching all listings
   const useAllListings = () => {
@@ -193,7 +197,7 @@ export const useListingsApi = (options = {}) => {
       isFetchingNextPage,
       isLoading,
       isError,
-      error,
+      error: paginatedError,
       refetch,
     } = usePaginatedListings();
 
@@ -203,7 +207,7 @@ export const useListingsApi = (options = {}) => {
     hookResult = {
       listings,
       loading: isLoading,
-      error: isError ? error : null,
+      error: isError ? paginatedError : null,
       hasMore: !!hasNextPage,
       loadMore: useCallback(() => {
         if (!isFetchingNextPage && hasNextPage) {
@@ -214,12 +218,17 @@ export const useListingsApi = (options = {}) => {
     };
   } else if (type === "my" && userId) {
     // Use my listings
-    const { data, isLoading, error, refetch } = useMyListings();
+    const {
+      data,
+      isLoading,
+      error: myListingsError,
+      refetch,
+    } = useMyListings();
 
     hookResult = {
       listings: data || [],
       loading: isLoading,
-      error,
+      error: myListingsError,
       fetchMyListings: refetch,
     };
   } else if (type === "host") {
@@ -260,12 +269,17 @@ export const useListingsApi = (options = {}) => {
     };
   } else {
     // Use all listings
-    const { data, isLoading, error, refetch } = useAllListings();
+    const {
+      data,
+      isLoading,
+      error: allListingsError,
+      refetch,
+    } = useAllListings();
 
     hookResult = {
       listings: data || [],
       loading: isLoading,
-      error,
+      error: allListingsError,
       fetchListings: refetch,
       getHostListings: useCallback(
         async (hostId) => {
@@ -305,6 +319,21 @@ export const useListingsApi = (options = {}) => {
     isUpdating: updateListingMutation.isPending,
     isDeleting: deleteListingMutation.isPending,
     isAddingAvailability: addAvailabilityMutation.isPending,
+    loading,
+    error,
+    getListingById: useCallback(async (listingId) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get(`/api/listing/getbyid/${listingId}`);
+        return response.data;
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to fetch listing");
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    }, []),
   };
 };
 

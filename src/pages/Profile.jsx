@@ -2,17 +2,19 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useListings } from "../hooks/useListings";
+import {listingService} from "../api/listingService"
 
 import "./Profile.css";
 
 const Profile = () => {
   const { currentUser, userId, loading, logout } = useAuth();
   const navigate = useNavigate();
+  const {deleteListing} = listingService();
 
   const {
     listings: userListings,
     loading: listingsLoading,
-    getHostListings,
+    getHostListings
   } = useListings(false);
 
   // Fetch user's bookings and listings when component mounts
@@ -56,6 +58,28 @@ const Profile = () => {
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
+    }
+  };
+
+  const handleDeleteListing = async (e, listingId) => {
+    e.stopPropagation();
+
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this listing?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await deleteListing(listingId);
+
+      await getHostListings(listingId);
+
+      /*//update the ui after seccessful deletion
+      setUserListings((prevListings) =>
+        prevListings.filter((listing) => listing.listingId !== listingId)
+      );*/
+    } catch (error) {
+      console.error("Failed to delete listing: ", error);
     }
   };
 
@@ -175,6 +199,12 @@ const Profile = () => {
                     }
                   >
                     Add Availability
+                  </button>
+                  <button
+                    className="action-button delete-button"
+                    onClick={(e) => handleDeleteListing(e, listing.listingId)}
+                  >
+                    Delete
                   </button>
                 </div>
                 <div className="view-listing-badge">View Details</div>
