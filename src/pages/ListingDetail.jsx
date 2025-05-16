@@ -1,10 +1,94 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-
+import axios from "axios";
 import DatePicker from "../components/DatePicker";
+import { format, addDays, subDays } from "date-fns";
 
 import "./ListingDetail.css";
+
+/**
+ * Helper function to normalize date format to YYYY-MM-DD string
+ * Works with various input formats and ensures consistent output
+ */
+const normalizeDateString = (dateInput) => {
+  if (!dateInput) return null;
+
+  try {
+    // If already in YYYY-MM-DD format, return as is
+    if (
+      typeof dateInput === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/.test(dateInput)
+    ) {
+      return dateInput;
+    }
+
+    // Handle Date objects or string dates
+    let date;
+    if (dateInput instanceof Date) {
+      date = dateInput;
+    } else if (typeof dateInput === "string") {
+      // Extract date part if ISO format
+      if (dateInput.includes("T")) {
+        dateInput = dateInput.split("T")[0];
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+          return dateInput;
+        }
+      }
+      // Create date object
+      date = new Date(dateInput);
+    } else {
+      return null;
+    }
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) return null;
+
+    // Format as YYYY-MM-DD
+    return format(date, "yyyy-MM-dd");
+  } catch (e) {
+    console.error("Error normalizing date:", e);
+    return null;
+  }
+};
+
+/**
+ * Check if dates need timezone correction
+ * This detects the issue where dates from MongoDB are shifted due to timezone differences
+ */
+const needsTimezoneCorrection = () => {
+  // Check if the local timezone is not UTC
+  const timezoneOffset = new Date().getTimezoneOffset();
+
+  // If timezone offset is not 0 (not UTC) and we have a negative offset
+  // (e.g., Europe/Stockholm is UTC+2, so offset is -120 minutes)
+  return timezoneOffset < 0;
+};
+
+/**
+ * Apply timezone correction to the dates
+ * This fixes the issue where dates are incorrectly shifted
+ */
+const applyTimezoneCorrection = (dateStrings) => {
+  if (!dateStrings || !Array.isArray(dateStrings) || dateStrings.length === 0)
+    return [];
+
+  return dateStrings.map((dateStr) => {
+    try {
+      // Parse date string to create a date at noon UTC
+      const date = new Date(`${dateStr}T12:00:00Z`);
+
+      // Correct the date - for positive timezone offset (like UTC+2),
+      // we need to subtract a day to get the correct date
+      const correctedDate = subDays(date, 1);
+
+      // Format back to YYYY-MM-DD
+      return format(correctedDate, "yyyy-MM-dd");
+    } catch (e) {
+      return dateStr; // If there's an error, keep the original string
+    }
+  });
+};
 
 const ListingDetail = () => {
   const { listingId } = useParams();
@@ -21,40 +105,116 @@ const ListingDetail = () => {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState(null);
+  const [availableDates, setAvailableDates] = useState([]);
+  const [bookedDates, setBookedDates] = useState([]);
+  const [availableDateStrings, setAvailableDateStrings] = useState([]);
 
+  // Fetch listing data and availability
   useEffect(() => {
-    // Simulate API call delay
-    setTimeout(() => {
-      setListing({
-        listingId: "placeholder-123",
-        listingTitle: "Placeholder Listing Title",
-        location: "Stockholm, Sweden",
-        listingPricePerNight: 1200,
-        description: "This is a placeholder description for this listing.",
-      });
-      setLoading(false);
-    }, 1000);
+    const fetchListingData = async () => {
+      setLoading(true);
+      try {
+        // Call the API endpoint
+        const response = await axios.get(`/api/listing/getbyid/${listingId}`);
+        setListing(response.data);
+
+        // Process available dates
+        if (response.data.available && Array.isArray(response.data.available)) {
+          const rawDates = response.data.available;
+
+          // Normalize dates to consistent YYYY-MM-DD format
+          const normalizedDates = new Set();
+          rawDates.forEach((date) => {
+            const normalized = normalizeDateString(date);
+            if (normalized) normalizedDates.add(normalized);
+          });
+
+          // Convert to arrays for component props
+          let dateStrings = Array.from(normalizedDates);
+
+          // Apply timezone correction if needed
+          const needsCorrection = needsTimezoneCorrection();
+          if (needsCorrection) {
+            dateStrings = applyTimezoneCorrection(dateStrings);
+          }
+
+          // Create Date objects (noon UTC to avoid timezone issues)
+          const dateObjects = dateStrings.map(
+            (dateStr) => new Date(`${dateStr}T12:00:00Z`)
+          );
+
+          // Update state
+          setAvailableDateStrings(dateStrings);
+          setAvailableDates(dateObjects);
+        } else {
+          setAvailableDateStrings([]);
+          setAvailableDates([]);
+        }
+
+        // Process booked dates with the same approach
+        if (
+          response.data.bookedDates &&
+          Array.isArray(response.data.bookedDates)
+        ) {
+          const bookedStrings = new Set();
+          response.data.bookedDates.forEach((date) => {
+            const normalized = normalizeDateString(date);
+            if (normalized) bookedStrings.add(normalized);
+          });
+
+          let bookedDateStrings = Array.from(bookedStrings);
+
+          // Apply timezone correction if needed
+          const needsCorrection = needsTimezoneCorrection();
+          if (needsCorrection) {
+            bookedDateStrings = applyTimezoneCorrection(bookedDateStrings);
+          }
+
+          const bookedObjects = bookedDateStrings.map(
+            (dateStr) => new Date(`${dateStr}T12:00:00Z`)
+          );
+
+          setBookedDates(bookedObjects);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching listing:", err);
+        setError("Failed to load listing details. Please try again later.");
+        setLoading(false);
+      }
+    };
+
+    fetchListingData();
   }, [listingId]);
 
-  // Calculate number of nights and total price when dates change
-  useEffect(() => {
-    if (selectedDates.length === 2 && listing) {
-      const startDate = new Date(selectedDates[0]);
-      const endDate = new Date(selectedDates[1]);
-      const diffTime = Math.abs(endDate - startDate);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  // Handle night count changes from the DatePicker
+  const handleNightCountChange = useCallback(
+    (nights) => {
+      setNumberOfNights(nights);
+      if (listing && nights > 0) {
+        setTotalPrice(nights * listing.listingPricePerNight);
+      } else {
+        setTotalPrice(0);
+      }
+    },
+    [listing]
+  );
 
-      setNumberOfNights(diffDays);
-      setTotalPrice(diffDays * listing.listingPricePerNight);
-    } else {
-      setNumberOfNights(0);
-      setTotalPrice(0);
-    }
-  }, [selectedDates, listing]);
+  // Check if a date is available using string comparison
+  const isDateAvailable = useCallback(
+    (date) => {
+      if (!date) return false;
+      // Format the date consistently
+      const dateString = format(date, "yyyy-MM-dd");
+      // Compare against our normalized available dates
+      return availableDateStrings.includes(dateString);
+    },
+    [availableDateStrings]
+  );
 
   // Handle booking creation
-  const handleBooking = () => {
-
+  const handleBooking = async () => {
     // Reset booking status
     setBookingError(null);
     setBookingLoading(true);
@@ -67,24 +227,39 @@ const ListingDetail = () => {
       return;
     }
 
-    if (selectedDates.length !== 2) {
+    if (selectedDates.length !== 2 || !selectedDates[0] || !selectedDates[1]) {
       setBookingError("Please select check-in and check-out dates");
       setBookingLoading(false);
       return;
     }
 
-    // Simulate booking process
-    setTimeout(() => {
+    if (numberOfNights <= 0) {
+      setBookingError(
+        "Invalid date selection. Please select a valid date range."
+      );
       setBookingLoading(false);
-      setBookingSuccess(true);
+      return;
+    }
 
-      // Show success message
+    // In a real implementation, submit booking to the API
+    try {
+      // Simulate booking process for now
       setTimeout(() => {
-        // In real app would navigate to profile
-        setBookingSuccess(false);
-        setSelectedDates([]);
-      }, 2000);
-    }, 1500);
+        setBookingLoading(false);
+        setBookingSuccess(true);
+
+        // Show success message
+        setTimeout(() => {
+          // In real app would navigate to profile
+          setBookingSuccess(false);
+          setSelectedDates([]);
+        }, 2000);
+      }, 1500);
+    } catch (err) {
+      console.error("Booking error:", err);
+      setBookingError("Failed to create booking. Please try again.");
+      setBookingLoading(false);
+    }
   };
 
   if (loading) {
@@ -133,16 +308,20 @@ const ListingDetail = () => {
         <DatePicker
           selectedDates={selectedDates}
           onDateChange={setSelectedDates}
-          bookedDates={[]} // Would be populated from API
-          availableDates={[]} // Would be populated from API
+          bookedDates={bookedDates}
+          availableDates={availableDates}
+          onNightCountChange={handleNightCountChange}
+          availableDateStrings={availableDateStrings}
+          isDateAvailable={isDateAvailable}
         />
 
-        {selectedDates.length === 2 && (
+        {numberOfNights > 0 && (
           <div className="booking-summary">
             <h3>Booking Summary</h3>
             <div className="booking-line">
               <span>
-                {listing.listingPricePerNight} kr × {numberOfNights} nights
+                {listing.listingPricePerNight} kr × {numberOfNights}{" "}
+                {numberOfNights === 1 ? "night" : "nights"}
               </span>
               <span>{totalPrice} kr</span>
             </div>
@@ -164,7 +343,7 @@ const ListingDetail = () => {
         <button
           className="reserve-button"
           onClick={handleBooking}
-          disabled={bookingLoading || selectedDates.length !== 2}
+          disabled={bookingLoading || numberOfNights <= 0}
         >
           {bookingLoading ? "Processing..." : "Reserve"}
         </button>
