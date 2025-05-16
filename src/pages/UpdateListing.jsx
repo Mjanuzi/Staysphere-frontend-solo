@@ -272,8 +272,7 @@ const UpdateListing = () => {
             type="button"
             onClick={() => navigate("/profile")}
             className="cancel-button"
-            disabled={isUpdating}
-            //commit
+            disabled={loading}
           >
             Cancel
           </button>
