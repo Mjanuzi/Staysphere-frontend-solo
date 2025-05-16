@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import axios from "axios";
+import { useListingsApi } from "../hooks/useListingsApi";
+import { useBookingsApi } from "../hooks/useBookingsApi";
 import DatePicker from "../components/DatePicker";
 import { format, addDays, subDays } from "date-fns";
 
@@ -95,98 +96,83 @@ const ListingDetail = () => {
   const navigate = useNavigate();
   const { currentUser, userId } = useAuth();
 
+  // Use React Query hooks with proper options
+  const {
+    useListingById,
+    loading: listingLoading,
+    error: listingError,
+  } = useListingsApi({ enabled: true });
+
+  const {
+    createBooking,
+    isCreating: bookingLoading,
+    error: bookingError,
+  } = useBookingsApi({ enabled: true });
+
+  // Get listing data using React Query
+  const { data: listing } = useListingById(listingId);
+
   // Core state
-  const [listing, setListing] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedDates, setSelectedDates] = useState([]);
   const [numberOfNights, setNumberOfNights] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
-  const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [bookingError, setBookingError] = useState(null);
   const [availableDates, setAvailableDates] = useState([]);
   const [bookedDates, setBookedDates] = useState([]);
   const [availableDateStrings, setAvailableDateStrings] = useState([]);
 
-  // Fetch listing data and availability
+  // Process listing data when it changes
   useEffect(() => {
-    const fetchListingData = async () => {
-      setLoading(true);
-      try {
-        // Call the API endpoint
-        const response = await axios.get(`/api/listing/getbyid/${listingId}`);
-        setListing(response.data);
+    if (!listing) return;
 
-        // Process available dates
-        if (response.data.available && Array.isArray(response.data.available)) {
-          const rawDates = response.data.available;
+    // Process available dates
+    if (listing.available && Array.isArray(listing.available)) {
+      const rawDates = listing.available;
+      const normalizedDates = new Set();
 
-          // Normalize dates to consistent YYYY-MM-DD format
-          const normalizedDates = new Set();
-          rawDates.forEach((date) => {
-            const normalized = normalizeDateString(date);
-            if (normalized) normalizedDates.add(normalized);
-          });
+      rawDates.forEach((date) => {
+        const normalized = normalizeDateString(date);
+        if (normalized) normalizedDates.add(normalized);
+      });
 
-          // Convert to arrays for component props
-          let dateStrings = Array.from(normalizedDates);
+      let dateStrings = Array.from(normalizedDates);
 
-          // Apply timezone correction if needed
-          const needsCorrection = needsTimezoneCorrection();
-          if (needsCorrection) {
-            dateStrings = applyTimezoneCorrection(dateStrings);
-          }
-
-          // Create Date objects (noon UTC to avoid timezone issues)
-          const dateObjects = dateStrings.map(
-            (dateStr) => new Date(`${dateStr}T12:00:00Z`)
-          );
-
-          // Update state
-          setAvailableDateStrings(dateStrings);
-          setAvailableDates(dateObjects);
-        } else {
-          setAvailableDateStrings([]);
-          setAvailableDates([]);
-        }
-
-        // Process booked dates with the same approach
-        if (
-          response.data.bookedDates &&
-          Array.isArray(response.data.bookedDates)
-        ) {
-          const bookedStrings = new Set();
-          response.data.bookedDates.forEach((date) => {
-            const normalized = normalizeDateString(date);
-            if (normalized) bookedStrings.add(normalized);
-          });
-
-          let bookedDateStrings = Array.from(bookedStrings);
-
-          // Apply timezone correction if needed
-          const needsCorrection = needsTimezoneCorrection();
-          if (needsCorrection) {
-            bookedDateStrings = applyTimezoneCorrection(bookedDateStrings);
-          }
-
-          const bookedObjects = bookedDateStrings.map(
-            (dateStr) => new Date(`${dateStr}T12:00:00Z`)
-          );
-
-          setBookedDates(bookedObjects);
-        }
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching listing:", err);
-        setError("Failed to load listing details. Please try again later.");
-        setLoading(false);
+      if (needsTimezoneCorrection()) {
+        dateStrings = applyTimezoneCorrection(dateStrings);
       }
-    };
 
-    fetchListingData();
-  }, [listingId]);
+      const dateObjects = dateStrings.map(
+        (dateStr) => new Date(`${dateStr}T12:00:00Z`)
+      );
+
+      setAvailableDateStrings(dateStrings);
+      setAvailableDates(dateObjects);
+    } else {
+      setAvailableDateStrings([]);
+      setAvailableDates([]);
+    }
+
+    // Process booked dates
+    if (listing.bookedDates && Array.isArray(listing.bookedDates)) {
+      const bookedStrings = new Set();
+      listing.bookedDates.forEach((date) => {
+        const normalized = normalizeDateString(date);
+        if (normalized) bookedStrings.add(normalized);
+      });
+
+      let bookedDateStrings = Array.from(bookedStrings);
+
+      if (needsTimezoneCorrection()) {
+        bookedDateStrings = applyTimezoneCorrection(bookedDateStrings);
+      }
+
+      const bookedObjects = bookedDateStrings.map(
+        (dateStr) => new Date(`${dateStr}T12:00:00Z`)
+      );
+
+      setBookedDates(bookedObjects);
+    }
+  }, [listing]);
 
   // Handle night count changes from the DatePicker
   const handleNightCountChange = useCallback(
@@ -205,9 +191,7 @@ const ListingDetail = () => {
   const isDateAvailable = useCallback(
     (date) => {
       if (!date) return false;
-      // Format the date consistently
       const dateString = format(date, "yyyy-MM-dd");
-      // Compare against our normalized available dates
       return availableDateStrings.includes(dateString);
     },
     [availableDateStrings]
@@ -215,59 +199,52 @@ const ListingDetail = () => {
 
   // Handle booking creation
   const handleBooking = async () => {
-    // Reset booking status
-    setBookingError(null);
-    setBookingLoading(true);
-    setBookingSuccess(false);
-
-    // Check user authentication
     if (!currentUser || !userId) {
-      setBookingError("You must be logged in to make a booking.");
-      setBookingLoading(false);
       return;
     }
 
     if (selectedDates.length !== 2 || !selectedDates[0] || !selectedDates[1]) {
-      setBookingError("Please select check-in and check-out dates");
-      setBookingLoading(false);
       return;
     }
 
     if (numberOfNights <= 0) {
-      setBookingError(
-        "Invalid date selection. Please select a valid date range."
-      );
-      setBookingLoading(false);
       return;
     }
 
-    // In a real implementation, submit booking to the API
     try {
-      // Simulate booking process for now
-      setTimeout(() => {
-        setBookingLoading(false);
-        setBookingSuccess(true);
+      const bookingData = {
+        listingId,
+        checkIn: format(selectedDates[0], "yyyy-MM-dd"),
+        checkOut: format(selectedDates[1], "yyyy-MM-dd"),
+        numberOfNights,
+        totalPrice,
+        userId: currentUser.username, // Add user information
+      };
 
-        // Show success message
-        setTimeout(() => {
-          // In real app would navigate to profile
-          setBookingSuccess(false);
-          setSelectedDates([]);
-        }, 2000);
-      }, 1500);
+      await createBooking(bookingData);
+      setBookingSuccess(true);
+
+      // Reset form after successful booking
+      setTimeout(() => {
+        setBookingSuccess(false);
+        setSelectedDates([]);
+        navigate("/profile"); // Navigate to profile page after booking
+      }, 2000);
     } catch (err) {
       console.error("Booking error:", err);
-      setBookingError("Failed to create booking. Please try again.");
-      setBookingLoading(false);
     }
   };
 
-  if (loading) {
+  if (listingLoading) {
     return <div className="loading-state">Loading listing details...</div>;
   }
 
-  if (error) {
-    return <div className="error-state">{error}</div>;
+  if (listingError) {
+    return (
+      <div className="error-state">
+        {listingError.message || "Failed to load listing"}
+      </div>
+    );
   }
 
   if (!listing) {
@@ -332,7 +309,11 @@ const ListingDetail = () => {
           </div>
         )}
 
-        {bookingError && <div className="booking-error">{bookingError}</div>}
+        {bookingError && (
+          <div className="booking-error">
+            {bookingError.message || "Failed to create booking"}
+          </div>
+        )}
 
         {bookingSuccess && (
           <div className="booking-success">
