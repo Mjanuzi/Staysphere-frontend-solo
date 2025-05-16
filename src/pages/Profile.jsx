@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { useListings } from "../hooks/useListings";
+import { useListingsApi } from "../hooks/useListingsApi";
 
 import "./Profile.css";
 
@@ -13,7 +13,14 @@ const Profile = () => {
     listings: userListings,
     loading: listingsLoading,
     getHostListings,
-  } = useListings(false);
+    deleteListing,
+    isDeleting,
+    error: listingsError,
+  } = useListingsApi(false);
+  // Local state for listings and delete modal
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
 
   // Fetch user's bookings and listings when component mounts
   useEffect(() => {
@@ -59,6 +66,39 @@ const Profile = () => {
     }
   };
 
+  const handleDeleteClick = (e, listingId) => {
+    e.stopPropagation();
+    setListingToDelete(listingId);
+    setShowDeleteConfirm(true);
+    setDeleteError(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!listingToDelete) {
+      setDeleteError("Listing ID is missing.");
+      return;
+    }
+    try {
+      await deleteListing(listingToDelete);
+      setUserListings((prev) =>
+        prev.filter((l) => l.listingId !== listingToDelete)
+      );
+      setShowDeleteConfirm(false);
+      setListingToDelete(null);
+      setDeleteError(null);
+    } catch (err) {
+      setDeleteError(
+        err?.response?.data?.message ||
+          "Failed to delete listing. Please try again."
+      );
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+    setListingToDelete(null);
+    setDeleteError(null);
+  };
   // Handle loading state
   if (loading) {
     return <div className="loading-state">Loading profile...</div>;
@@ -176,6 +216,12 @@ const Profile = () => {
                   >
                     Add Availability
                   </button>
+                  <button
+                    className="action-button delete-button"
+                    onClick={(e) => handleDeleteClick(e, listing.listingId)}
+                  >
+                    Delete
+                  </button>
                 </div>
                 <div className="view-listing-badge">View Details</div>
               </div>
@@ -190,6 +236,33 @@ const Profile = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Confirm Deletion</h3>
+            <p>Are you sure you want to delete this listing?</p>
+            {deleteError && <div className="error-message">{deleteError}</div>}
+            <div className="modal-actions">
+              <button
+                className="confirm-button"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Confirm"}
+              </button>
+              <button
+                className="cancel-button"
+                onClick={handleDeleteCancel}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
