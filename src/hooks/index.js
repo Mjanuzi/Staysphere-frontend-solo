@@ -7,8 +7,10 @@
 export { useAuth } from "./useAuth";
 export { useListings } from "./useListings";
 export { useMyListings } from "./useMyListings";
+export { useBookings } from "./useBookings";
 export { useListingsQuery } from "./useListingsQuery";
 export { usePaginatedListingsQuery } from "./usePaginatedListingsQuery";
 
 // Samling av hooks för respektive API
 export { useListingsApi } from "./useListingsApi";
+export { useBookingsApi } from "./useBookingsApi";
