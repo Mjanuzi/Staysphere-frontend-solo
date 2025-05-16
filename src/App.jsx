@@ -32,13 +32,7 @@ function App() {
             {/* protected routes for all authenticated users */}
             <Route element={<ProtectedRoute />}>
               <Route path="/profile" element={<Profile />} />
-
-              <Route
-                path="/update-listing/:listingId"
-                element={<UpdateListing />}
-              />
-
-              <Route path="/create-listing" element={<CreateListing />} />
+              <Route path="/update-listing/:listingId" element={<UpdateListing />} />
             </Route>
           
             
