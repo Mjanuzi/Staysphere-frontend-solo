@@ -153,18 +153,21 @@ const UpdateListing = () => {
 
       // Send the data to the server
       //await api.patch(`/api/listing/patch/${listingId}`, submissionData);
-      updateListing(submissionData, {
-        onSuccess: () => {
-          console.log("Listing Update successfully");
-          navigate("/profile");
-        },
-        onError: (error) => {
-          console.error("Error in mutation:", error);
-          setErrorMessage(
-            error.message || "Failed to Update listing. Please try again."
-          );
-        },
-      });
+      updateListing(
+        { listingId, listingData: submissionData },
+        {
+          onSuccess: () => {
+            console.log("Listing updated successfully");
+            navigate("/profile");
+          },
+          onError: (error) => {
+            console.error("Error in mutation:", error);
+            setErrorMessage(
+              error.message || "Failed to update listing. Please try again."
+            );
+          },
+        }
+      );
     } catch (error) {
       console.error("Error Update listing:", error);
       setErrorMessage("An unexpected error occurred. Please try again.");
