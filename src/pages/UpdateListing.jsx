@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import api from "../api/axios";
 import "./CreateListing.css"; // Reuse the same styling
-import {useListingApi}from "../hooks/useListingsApi";
+import {useListingsApi}from "../hooks/useListingsApi";
 import { updateListing } from "../api/listingService";
 /**
  * UpdateListing Component
@@ -17,6 +17,7 @@ const UpdateListing = () => {
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  
 
   // Form state
   const [formData, setFormData] = useState({
