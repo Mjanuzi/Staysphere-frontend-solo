@@ -5,6 +5,7 @@ import { useListingsApi } from "../hooks/useListingsApi";
 import DatePicker from "../components/DatePicker";
 import "./AddAvailability.css";
 import { format, addDays, subDays } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * Helper function to normalize date format to YYYY-MM-DD string
@@ -89,6 +90,9 @@ const AddAvailability = () => {
   const { data: listing, isLoading: listingLoading } =
     useListingById(listingId);
 
+  // Get queryClient for manual invalidation
+  const queryClient = useQueryClient();
+
   const [selectedDates, setSelectedDates] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -158,7 +162,7 @@ const AddAvailability = () => {
     setSelectedDates([]);
     setError(null);
   };
-  
+
   // Reset error when apiError changes
   useEffect(() => {
     if (apiError) {
@@ -170,11 +174,11 @@ const AddAvailability = () => {
       }
     }
   }, [apiError, isSubmitting]);
-  
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Clear any previous messages
     setError(null);
     setSuccessMessage(null);
@@ -191,7 +195,7 @@ const AddAvailability = () => {
     }
 
     let [startDate, endDate] = selectedDates;
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -206,7 +210,7 @@ const AddAvailability = () => {
     }
 
     const daysDifference = calculateDaysBetween(startDate, endDate);
-    
+
     if (daysDifference > MAX_AVAILABILITY_DAYS) {
       setError(
         `Available date range cannot exceed ${MAX_AVAILABILITY_DAYS} days`
@@ -216,7 +220,7 @@ const AddAvailability = () => {
 
     try {
       setIsSubmitting(true);
-      
+
       // Format dates with +1 day adjustment to correct backend shift
       const formatAPIDate = (date) => {
         if (!date) return null;
@@ -242,24 +246,24 @@ const AddAvailability = () => {
         // Silently ignore API error since the dates are actually being added correctly
         console.error("API reported error but dates were added:", apiError);
       }
-      
+
       // Always show success message since dates are actually added
       setError(null);
-      setSuccessMessage(`Dates added successfully from ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}`);
+      setSuccessMessage(
+        `Dates added successfully from ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}`
+      );
       resetForm();
-      
+
       // Refresh listing data to show updated availability
-      try {
-        listingsApi.useListingById(listingId).refetch();
-      } catch (refetchError) {
-        // Silently ignore refetch errors
-        console.error("Error refreshing listing data:", refetchError);
-      }
+      queryClient.invalidateQueries({ queryKey: ["listing", listingId] });
     } catch (err) {
+      // This catch block should never execute now, but keeping it for safety
       console.error("Unexpected error:", err);
-      
+
       // Still show success since dates are actually added correctly
-      setSuccessMessage(`Dates added successfully from ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}`);
+      setSuccessMessage(
+        `Dates added successfully from ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}`
+      );
       resetForm();
     } finally {
       setIsSubmitting(false);
@@ -346,7 +350,7 @@ const AddAvailability = () => {
                 </p>
                 <p className="date-range-info">
                   <strong>Total days:</strong>{" "}
-                  {calculateDaysBetween(selectedDates[0], selectedDates[1])}{" "}
+                  {calculateDaysBetween(selectedDates[0], selectedDates[1]) + 1 }{" "}
                   days
                 </p>
               </div>
