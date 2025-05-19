@@ -251,6 +251,16 @@ const ListingDetail = () => {
     return <div className="error-state">Listing not found</div>;
   }
 
+  //get images from listings
+  const getListingImage = () => {
+    if (listing.listingImages && listing.listingImages.length > 0) {
+      return listing.listingImages[0];
+    }
+
+    // Default image if none provided
+    return "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcRT7i7bQB0Z_F2zXCI2H-wbpP-bsUkYSgjw08dbluvC8kR71kuENJmumDLU4BpHXwLreCkRcpKA6VSZxkH07Zp5y1EA_vyZ8HJPUHxzyu-jciS1Ah9lQw5T";
+  };
+
   return (
     <div className="listing-detail-container">
       <section className="listing-header">
@@ -259,7 +269,11 @@ const ListingDetail = () => {
       </section>
 
       <section className="listing-image">
-        <div className="placeholder-image">Listing Image Placeholder</div>
+        <img
+          src={getListingImage(listing)}
+          alt={listing.listingTitle || "Listing"}
+          className="listing-detail-image"
+        />
       </section>
 
       <section className="listing-booking-info">
