@@ -7,11 +7,16 @@ import { useListingsApi } from "./useListingsApi";
  * @returns {Object} Listings data and management functions
  */
 export const useListings = (fetchOnMount = true) => {
-  const { listings, loading, error, fetchListings, getHostListings } =
-    useListingsApi({
-      enabled: fetchOnMount,
-      type: "all",
-    });
+  const {
+    listings,
+    loading,
+    error,
+    fetchListings,
+    getHostListings,
+  } = useListingsApi({
+    enabled: fetchOnMount,
+    type: "all",
+  });
 
   return {
     listings,
