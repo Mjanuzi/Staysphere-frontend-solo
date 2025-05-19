@@ -113,6 +113,8 @@
   background-color: rgba(0, 128, 0, 0.15) !important;
   position: relative !important;
   border: 1px solid rgba(0, 128, 0, 0.3) !important;
+  color: #006400 !important;
+  font-weight: 600 !important;
 }
 
 .react-datepicker__day.available-date:not(.react-datepicker__day--selected):not(

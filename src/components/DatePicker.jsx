@@ -206,7 +206,12 @@ const DatePicker = ({
       today.setHours(0, 0, 0, 0);
       if (date < today) return true;
 
-      // Disable booked dates
+      // If in availability mode, don't disable future dates
+      if (isAddingAvailability) {
+        return false;
+      }
+
+      // Disable booked dates for normal booking mode
       if (isDateBooked(date)) return true;
 
       // Special case: checkout date selection
@@ -230,7 +235,7 @@ const DatePicker = ({
         }
       }
 
-      // Standard availability check
+      // Standard availability check for booking mode
       return !isAddingAvailability && !isDateInAvailableDates(date);
     },
     [
@@ -254,7 +259,30 @@ const DatePicker = ({
       // Normalize dates array
       let newDates = Array.isArray(dates) ? [...dates] : [dates];
 
-      // Handle range selection
+      // In availability mode, just pass the dates through without validation
+      if (isAddingAvailability) {
+        // Make sure we have proper Date objects
+        if (newDates.length > 0) {
+          // Log for debugging
+          /*console.log(
+            "DatePicker handling date selection in availability mode:",
+            newDates
+          );*/
+
+          // Make sure we have proper Date objects
+          newDates = newDates.map((date) => {
+            if (date instanceof Date && !isNaN(date.getTime())) {
+              return date;
+            }
+            return null;
+          });
+        }
+
+        onDateChange(newDates);
+        return;
+      }
+
+      // For booking mode, apply all the validations
       if (newDates.length === 2 && newDates[0] && newDates[1]) {
         const [start, end] = newDates;
 
@@ -279,7 +307,7 @@ const DatePicker = ({
 
       onDateChange(newDates);
     },
-    [onDateChange, isDateDisabled]
+    [onDateChange, isDateDisabled, isAddingAvailability]
   );
 
   // Day class name calculator for styling
@@ -292,8 +320,12 @@ const DatePicker = ({
         classes.push("available-date");
       }
 
-      // Special class for day after a selected start date
-      if (parsedSelectedDates.length === 1 && parsedSelectedDates[0]) {
+      // Special class for day after a selected start date (for booking mode)
+      if (
+        !isAddingAvailability &&
+        parsedSelectedDates.length === 1 &&
+        parsedSelectedDates[0]
+      ) {
         const nextDay = addDays(parsedSelectedDates[0], 1);
         if (areDatesEqual(date, nextDay)) {
           classes.push("checkout-date");
@@ -317,8 +349,22 @@ const DatePicker = ({
 
       return classes.join(" ");
     },
-    [parsedSelectedDates, isDateInAvailableDates, areDatesEqual]
+    [
+      parsedSelectedDates,
+      isDateInAvailableDates,
+      areDatesEqual,
+      isAddingAvailability,
+    ]
   );
+
+  // Get the appropriate hint text
+  const getHintText = () => {
+    if (isAddingAvailability) {
+      return "Please select an end date";
+    }
+
+    return "Please select a checkout date";
+  };
 
   return (
     <div className="date-picker-container">
@@ -336,7 +382,7 @@ const DatePicker = ({
         dayClassName={getDayClassName}
       />
       {parsedSelectedDates.length === 1 && (
-        <div className="date-picker-hint">Please select a checkout date</div>
+        <div className="date-picker-hint">{getHintText()}</div>
       )}
     </div>
   );
