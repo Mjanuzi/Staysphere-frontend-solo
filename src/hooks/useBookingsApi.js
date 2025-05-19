@@ -13,7 +13,7 @@ import api from "../api/axios";
  * @returns {Object} Bookings data and management functions
  */
 export const useBookingsApi = (options = {}) => {
-  const { enabled = true, type = "all" } = options;
+  const { enabled = true, type = "none" } = options;
   const queryClient = useQueryClient();
   const { userId, currentUser } = useAuth();
 
@@ -21,18 +21,32 @@ export const useBookingsApi = (options = {}) => {
    * Hook for fetching all bookings (admin only)
    */
   const useAllBookings = () => {
+    // Only enable this query if the user has ADMIN role
+    const isAdmin = currentUser?.roles?.includes("ADMIN");
+
     return useQuery({
       queryKey: ["bookings", "all"],
       queryFn: async () => {
         try {
+          // If not admin, return empty array instead of making the request
+          if (!isAdmin) {
+            return [];
+          }
+
           const response = await api.get("/bookings/all");
           return response.data;
         } catch (err) {
-          console.error("Error fetching all bookings:", err);
+          // For 403/404 errors, return empty array instead of throwing
+          if (
+            err.response &&
+            (err.response.status === 403 || err.response.status === 404)
+          ) {
+            return [];
+          }
           throw new Error(err.message || "Failed to fetch bookings");
         }
       },
-      enabled: enabled && type === "all",
+      enabled: enabled && type === "all" && isAdmin, // Only enable for admins
     });
   };
 
@@ -51,7 +65,6 @@ export const useBookingsApi = (options = {}) => {
           const response = await api.get(`/bookings/user/${userId}`);
           return response.data;
         } catch (err) {
-          console.error(`Error fetching bookings for user ${userId}:`, err);
           throw new Error(err.message || "Failed to fetch your bookings");
         }
       },
@@ -74,7 +87,6 @@ export const useBookingsApi = (options = {}) => {
           const response = await api.get(`/bookings/host/${hostId}`);
           return response.data;
         } catch (err) {
-          console.error(`Error fetching bookings for host ${hostId}:`, err);
           throw new Error(err.message || "Failed to fetch host bookings");
         }
       },
@@ -90,21 +102,22 @@ export const useBookingsApi = (options = {}) => {
       const response = await api.post("/bookings", bookingData);
       return response.data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       // Invalidate relevant queries to refetch data
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
 
-      // If we have user data, invalidate user-specific bookings
-      if (currentUser?.username) {
+      // Always invalidate user bookings for the current user
+      if (userId || currentUser?.username) {
+        const targetUserId = userId || currentUser?.username;
         queryClient.invalidateQueries({
-          queryKey: ["bookings", "user", currentUser.username],
+          queryKey: ["bookings", "user", targetUserId],
         });
       }
 
-      // If we have a host ID in the created booking, invalidate host bookings
-      if (data?.hostId) {
+      // Always invalidate listing bookings for the listing in the booking data
+      if (variables.listingId) {
         queryClient.invalidateQueries({
-          queryKey: ["bookings", "host", data.hostId],
+          queryKey: ["listings", variables.listingId, "bookings"],
         });
       }
     },
@@ -115,7 +128,29 @@ export const useBookingsApi = (options = {}) => {
    */
   const updateBookingMutation = useMutation({
     mutationFn: async ({ bookingId, bookingData }) => {
-      const response = await api.patch(`/bookings/${bookingId}`, bookingData);
+      // Verify that we have all required fields for the booking update
+      if (!bookingData.startDate || !bookingData.endDate) {
+        throw new Error("Missing required booking data");
+      }
+
+      // Ensure both property names are set for consistency
+      const normalizedBookingData = {
+        ...bookingData,
+        // Set both properties to the same value to handle backend inconsistency
+        isPending:
+          bookingData.pending !== undefined
+            ? bookingData.pending
+            : bookingData.isPending,
+        pending:
+          bookingData.isPending !== undefined
+            ? bookingData.isPending
+            : bookingData.pending,
+      };
+
+      const response = await api.patch(
+        `/bookings/${bookingId}`,
+        normalizedBookingData
+      );
       return response.data;
     },
     onSuccess: (data, variables) => {
@@ -131,6 +166,13 @@ export const useBookingsApi = (options = {}) => {
       if (currentUser?.username) {
         queryClient.invalidateQueries({
           queryKey: ["bookings", "user", currentUser.username],
+        });
+      }
+
+      // Also invalidate listing bookings if we have listingId
+      if (variables.bookingData && variables.bookingData.listingId) {
+        queryClient.invalidateQueries({
+          queryKey: ["listings", variables.bookingData.listingId, "bookings"],
         });
       }
     },
@@ -151,6 +193,25 @@ export const useBookingsApi = (options = {}) => {
         return response.data;
       },
       enabled: enabled && Boolean(bookingId),
+    });
+  };
+
+  /**
+   * Hook for fetching bookings for a specific listing
+   */
+  const useListingBookings = (listingId) => {
+    return useQuery({
+      queryKey: ["listings", listingId, "bookings"],
+      queryFn: async () => {
+        if (!listingId) {
+          throw new Error("Listing ID is required");
+        }
+        const response = await api.get(
+          `/bookings/listings/${listingId}/bookings`
+        );
+        return response.data;
+      },
+      enabled: Boolean(listingId),
     });
   };
 
@@ -206,8 +267,8 @@ export const useBookingsApi = (options = {}) => {
       ),
       refetch,
     };
-  } else {
-    // Use all bookings
+  } else if (type === "all" && currentUser?.roles?.includes("ADMIN")) {
+    // Admin users can see all bookings
     const { data, isLoading, error, refetch } = useAllBookings();
 
     hookResult = {
@@ -215,41 +276,76 @@ export const useBookingsApi = (options = {}) => {
       loading: isLoading,
       error,
       fetchAllBookings: refetch,
-
-      // Maintain compatibility with original hook
-      fetchUserBookings: useCallback(
-        (userId) => {
-          if (!userId) return Promise.resolve([]);
-
-          return queryClient.fetchQuery({
-            queryKey: ["bookings", "user", userId],
-            queryFn: async () => {
-              const response = await api.get(`/bookings/user/${userId}`);
-              return response.data;
-            },
-          });
-        },
-        [queryClient]
-      ),
-
-      fetchHostBookings: useCallback(
-        (hostId) => {
-          if (!hostId) return Promise.resolve([]);
-
-          return queryClient.fetchQuery({
-            queryKey: ["bookings", "host", hostId],
-            queryFn: async () => {
-              const response = await api.get(`/bookings/host/${hostId}`);
-              return response.data;
-            },
-          });
-        },
-        [queryClient]
-      ),
+    };
+  } else {
+    // Default case - no automatic data fetching
+    hookResult = {
+      bookings: [],
+      loading: false,
+      error: null,
     };
   }
 
-  // Add mutations to result
+  // Add helper functions regardless of user type
+  hookResult = {
+    ...hookResult,
+    fetchUserBookings: useCallback(
+      (userId) => {
+        if (!userId) return Promise.resolve([]);
+
+        return queryClient.fetchQuery({
+          queryKey: ["bookings", "user", userId],
+          queryFn: async () => {
+            const response = await api.get(`/bookings/user/${userId}`);
+            return response.data;
+          },
+        });
+      },
+      [queryClient]
+    ),
+    fetchHostBookings: useCallback(
+      (hostId) => {
+        if (!hostId) return Promise.resolve([]);
+
+        return queryClient.fetchQuery({
+          queryKey: ["bookings", "host", hostId],
+          queryFn: async () => {
+            const response = await api.get(`/bookings/host/${hostId}`);
+            return response.data;
+          },
+        });
+      },
+      [queryClient]
+    ),
+  };
+
+  const fetchListingBookings = useCallback(
+    (listingId) => {
+      if (!listingId) return Promise.resolve([]);
+
+      return queryClient.fetchQuery({
+        queryKey: ["listings", listingId, "bookings"],
+        queryFn: async () => {
+          try {
+            const response = await api.get(
+              `/bookings/listings/${listingId}/bookings`
+            );
+            return response.data;
+          } catch (err) {
+            if (
+              err.response &&
+              (err.response.status === 403 || err.response.status === 404)
+            ) {
+              return [];
+            }
+            throw err;
+          }
+        },
+      });
+    },
+    [queryClient]
+  );
+
   return {
     ...hookResult,
     createBooking: createBookingMutation.mutate,
@@ -257,6 +353,8 @@ export const useBookingsApi = (options = {}) => {
     isCreating: createBookingMutation.isPending,
     isUpdating: updateBookingMutation.isPending,
     useBookingById,
+    useListingBookings,
+    fetchListingBookings,
   };
 };
 
