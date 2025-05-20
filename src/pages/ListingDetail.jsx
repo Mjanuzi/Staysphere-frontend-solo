@@ -289,7 +289,6 @@ const ListingDetail = () => {
 
       <section className="listing-description">
         <h2>About this place</h2>
-        //grammer issue//
         <p>{listing.listingDescription || "Placeholder description text."}</p>
       </section>
 
