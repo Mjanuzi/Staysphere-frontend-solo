@@ -109,27 +109,18 @@
   background-color: #d32f2f;
 }
 
-/* Bookings and Listings */
-.bookings-list,
+/* Listings */
 .listings-list {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.booking-item,
 .listing-item {
   border: 1px solid #eee;
   border-radius: 0.5rem;
   padding: 1rem;
   transition: box-shadow 0.2s, transform 0.2s;
-}
-
-.booking-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.listing-item {
   position: relative;
   cursor: pointer;
 }
@@ -140,7 +131,6 @@
   border-color: #ddd;
 }
 
-.booking-item h3,
 .listing-item h3 {
   margin-top: 0;
   margin-bottom: 0.75rem;
@@ -148,14 +138,12 @@
   color: #333;
 }
 
-.booking-details,
 .listing-details {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.booking-details p,
 .listing-details p {
   margin: 0;
   font-size: 0.9rem;
@@ -163,7 +151,7 @@
 
 .listing-actions {
   display: flex;
-  justify-content: flex-start;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 1rem;
 }
@@ -176,6 +164,9 @@
   cursor: pointer;
   transition: background-color 0.2s;
   border: none;
+  flex-grow: 1;
+  max-width: calc(50% - 0.25rem);
+  text-align: center;
 }
 
 .update-button {
@@ -195,10 +186,21 @@
 .availability-button:hover {
   background-color: #388e3c;
 }
+
+.manage-bookings-button {
+  background-color: #2196f3;
+  color: white;
+}
+
+.manage-bookings-button:hover {
+  background-color: #1976d2;
+}
+
 .delete-button {
   background-color: #d32f2f;
   color: white;
 }
+
 .delete-button:hover {
   background-color: #992121;
 }
@@ -239,6 +241,21 @@
   font-weight: 500;
 }
 
+.pending-bookings-notice {
+  background-color: #fff8e1;
+  color: #ff9800;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  font-weight: 500;
+  border-left: 3px solid #ff9800;
+}
+
+.pending-count {
+  font-weight: 700;
+  font-size: 1.1em;
+}
+
 /* Tablet breakpoint (768px) */
 @media (min-width: 768px) {
   .profile-container h1 {
@@ -256,11 +273,15 @@
     margin-right: 1rem;
   }
 
-  .bookings-list,
   .listings-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1rem;
+  }
+
+  .action-button {
+    max-width: fit-content;
+    flex-grow: 0;
   }
 }
 
