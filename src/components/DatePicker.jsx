@@ -101,6 +101,7 @@ const DatePicker = ({
     [selectedDates, ensureDates]
   );
 
+  // Parse booked dates
   const parsedBookedDates = useMemo(
     () => ensureDates(bookedDates),
     [bookedDates, ensureDates]
