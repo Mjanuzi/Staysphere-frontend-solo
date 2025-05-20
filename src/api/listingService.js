@@ -201,7 +201,8 @@ export const deleteListing = async (listingId) => {
  */
 export const addAvailability = async (listingId, availabilityData) => {
   try {
-    console.log(`Adding availability to listing with ID: ${listingId}`);
+    /*console.log(`Adding availability to listing with ID: ${listingId}`, availabilityData);*/
+    // Using the exact endpoint structure as defined in the backend controller
     const response = await api.post(
       `/api/listing/listings/${listingId}/availability`,
       availabilityData
@@ -210,7 +211,7 @@ export const addAvailability = async (listingId, availabilityData) => {
   } catch (error) {
     console.error(
       `Error adding availability to listing with ID ${listingId}:`,
-      error
+      error.response || error
     );
     throw error;
   }
