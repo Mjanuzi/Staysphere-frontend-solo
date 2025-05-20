@@ -120,6 +120,7 @@ const ListingDetail = () => {
   const [availableDates, setAvailableDates] = useState([]);
   const [bookedDates, setBookedDates] = useState([]);
   const [availableDateStrings, setAvailableDateStrings] = useState([]);
+  const [reviews, setReviews] = useState([]);
 
   // Process listing data when it changes
   useEffect(() => {
@@ -235,6 +236,30 @@ const ListingDetail = () => {
     }
   };
 
+  useEffect(() => {
+    // Set mock reviews on mount or after listing loads
+    setReviews([
+      {
+        id: 1,
+        username: "Shanice",
+        rating: 5,
+        comment:
+          "Loved this place! Would definitely stay again. The view was amazing and the host was very accommodating.",
+        date: "2023-12-15",
+        avatar: "https://randomuser.me/api/portraits/women/65.jpg",
+      },
+      {
+        id: 2,
+        username: "Brian",
+        rating: 4,
+        comment:
+          "Great location and comfortable stay. The tree house is well designed and equipped with all necessities.",
+        date: "2023-11-22",
+        avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+      },
+    ]);
+  }, []);
+
   if (listingLoading) {
     return <div className="loading-state">Loading listing details...</div>;
   }
@@ -261,6 +286,29 @@ const ListingDetail = () => {
     return "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcRT7i7bQB0Z_F2zXCI2H-wbpP-bsUkYSgjw08dbluvC8kR71kuENJmumDLU4BpHXwLreCkRcpKA6VSZxkH07Zp5y1EA_vyZ8HJPUHxzyu-jciS1Ah9lQw5T";
   };
 
+  //Mockdata conveniences
+  const amenities = [
+    { name: "Air conditioner", available: true },
+    { name: "Hot tub", available: false },
+    { name: "Hot water shower", available: true },
+    { name: "Hair dryer", available: true },
+    { name: "Workspace", available: true },
+    { name: "Kitchen", available: true },
+    { name: "Coffee maker", available: true },
+    { name: "Parking", available: true },
+    { name: "Patio", available: true },
+    { name: "Bathrooms", available: true },
+    { name: "Wi-Fi", available: true },
+    { name: "Bedrooms", available: true },
+  ];
+
+  
+ 
+
+
+
+
+
   return (
     <div className="listing-detail-container">
       <section className="listing-header">
@@ -282,6 +330,14 @@ const ListingDetail = () => {
             <span className="price">{listing.listingPricePerNight} kr</span>
             <span className="per-night"> / night</span>
           </p>
+          <div className="host-info">
+            <img src="https://fcb-abj-pre.s3.amazonaws.com/img/jugadors/MESSI.jpg" 
+            alt="Host"
+            className="host-avatar" 
+            />
+            <span>{listing.hostName} is your host</span>
+
+          </div>
         </div>
       </section>
 
@@ -293,6 +349,84 @@ const ListingDetail = () => {
       </section>
 
       <hr />
+
+      <div className="listing-amenities">
+        <h2>Conveniences</h2>
+        <div className="amenities-grid">
+          {amenities.map((amenity, index) => (
+            <div
+              key={index}
+              className={`amenity-item ${
+                !amenity.available ? "unavailable" : ""
+              }`}
+            >
+              <span className="amenity-icon">
+                {amenity.available ? "✓" : "✗"}
+              </span>
+              <span className="amenity-name">{amenity.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <hr />
+
+      <div className="listing-map">
+        <h2>Location</h2>
+        <div className="map-container">
+          <img
+            src="https://www.mapshop.com/wp-content/uploads/2023/04/NYC-Inset.jpg"
+            alt="Map location"
+            className="location-map"
+          />
+        </div>
+      </div>
+
+      <hr />
+
+      <div className="listing-reviews">
+        <h2>Reviews</h2>
+        {reviews.length > 0 ? (
+          <div className="reviews-container">
+            {reviews.map((review) => (
+              <div key={review.id} className="review-item">
+                <div className="review-header">
+                  <img
+                    src={review.avatar}
+                    alt={review.username}
+                    className="reviewer-avatar"
+                  />
+                  <div className="review-meta">
+                    <h3>{review.username}</h3>
+                    <div className="review-rating">
+                      {[...Array(5)].map((_, i) => (
+                        <span
+                          key={i}
+                          className={i < review.rating ? "star filled" : "star"}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                    <p className="review-date">
+                      {new Date(review.date).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <p className="review-comment">{review.comment}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>No reviews yet for this listing.</p>
+        )}
+      </div>
+
+      <hr />
+
+
+
+
 
       <section className="booking-section">
         <h2>Select dates</h2>
