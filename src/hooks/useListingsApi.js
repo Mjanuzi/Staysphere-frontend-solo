@@ -7,7 +7,7 @@ import {
 import { useCallback, useState } from "react";
 import { useAuth } from "./useAuth";
 import listingService from "../api/listingService";
-import axios from "axios";
+import { getListingById } from "../api/listingService";
 
 /**
  * hook for accessing and managing listings data using React Query
@@ -89,6 +89,10 @@ export const useListingsApi = (options = {}) => {
         return await listingService.getListingById(listingId);
       },
       enabled: enabled && Boolean(listingId),
+      // Reduced staleTime to ensure fresh data when revisiting
+      staleTime: 0, // No caching - always refetch on revisit
+      refetchOnMount: true, // Force refetch when component mounts
+      refetchOnWindowFocus: true, // Refetch when window regains focus
     });
   };
 
@@ -325,10 +329,9 @@ export const useListingsApi = (options = {}) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(`/api/listing/getbyid/${listingId}`);
-        return response.data;
+        return await getListingById(listingId);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to fetch listing");
+        setError(err.message || "Failed to fetch listing");
         throw err;
       } finally {
         setLoading(false);

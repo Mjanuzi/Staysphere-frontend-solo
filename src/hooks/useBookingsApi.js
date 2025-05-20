@@ -1,10 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useAuth } from "./useAuth";
-import api from "../api/axios";
+import {
+  createBooking,
+  getUserBookings,
+  getHostBookings,
+  getListingBookings,
+  updateBookingStatus,
+  getAllBookings,
+  getBookingById,
+} from "../api/bookingsService";
 
 /**
- * hook for accessing and managing booking data using React Query
+ * Custom hook for accessing and managing booking data using React Query
  * Provides better caching and performance than the original useBookings hook
  *
  * @param {Object} options - Configuration options
@@ -33,16 +41,8 @@ export const useBookingsApi = (options = {}) => {
             return [];
           }
 
-          const response = await api.get("/bookings/all");
-          return response.data;
+          return await getAllBookings();
         } catch (err) {
-          // For 403/404 errors, return empty array instead of throwing
-          if (
-            err.response &&
-            (err.response.status === 403 || err.response.status === 404)
-          ) {
-            return [];
-          }
           throw new Error(err.message || "Failed to fetch bookings");
         }
       },
@@ -62,8 +62,7 @@ export const useBookingsApi = (options = {}) => {
         }
 
         try {
-          const response = await api.get(`/bookings/user/${userId}`);
-          return response.data;
+          return await getUserBookings(userId);
         } catch (err) {
           throw new Error(err.message || "Failed to fetch your bookings");
         }
@@ -84,8 +83,7 @@ export const useBookingsApi = (options = {}) => {
         }
 
         try {
-          const response = await api.get(`/bookings/host/${hostId}`);
-          return response.data;
+          return await getHostBookings(hostId);
         } catch (err) {
           throw new Error(err.message || "Failed to fetch host bookings");
         }
@@ -95,13 +93,43 @@ export const useBookingsApi = (options = {}) => {
   };
 
   /**
+   * Hook for fetching a specific booking by ID
+   */
+  const useBookingById = (bookingId) => {
+    return useQuery({
+      queryKey: ["booking", bookingId],
+      queryFn: async () => {
+        if (!bookingId) {
+          throw new Error("Booking ID is required");
+        }
+
+        return await getBookingById(bookingId);
+      },
+      enabled: enabled && Boolean(bookingId),
+    });
+  };
+
+  /**
+   * Hook for fetching bookings for a specific listing
+   */
+  const useListingBookings = (listingId) => {
+    return useQuery({
+      queryKey: ["listings", listingId, "bookings"],
+      queryFn: async () => {
+        if (!listingId) {
+          throw new Error("Listing ID is required");
+        }
+        return await getListingBookings(listingId);
+      },
+      enabled: Boolean(listingId),
+    });
+  };
+
+  /**
    * Mutation for creating a new booking
    */
   const createBookingMutation = useMutation({
-    mutationFn: async (bookingData) => {
-      const response = await api.post("/bookings", bookingData);
-      return response.data;
-    },
+    mutationFn: createBooking,
     onSuccess: (data, variables) => {
       // Invalidate relevant queries to refetch data
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
@@ -116,10 +144,26 @@ export const useBookingsApi = (options = {}) => {
 
       // Always invalidate listing bookings for the listing in the booking data
       if (variables.listingId) {
+        // Invalidate the specific listing to refresh available dates
+        queryClient.invalidateQueries({
+          queryKey: ["listing", variables.listingId],
+        });
+
+        // Invalidate listing bookings
         queryClient.invalidateQueries({
           queryKey: ["listings", variables.listingId, "bookings"],
         });
+
+        // Invalidate all listings to refresh the listings page
+        queryClient.invalidateQueries({
+          queryKey: ["listings"],
+        });
       }
+
+      // Store a flag in sessionStorage to indicate a booking was just made
+      // This will be used to force refresh when revisiting a listing
+      sessionStorage.setItem("justBooked", "true");
+      sessionStorage.setItem("bookedListingId", variables.listingId);
     },
   });
 
@@ -127,31 +171,13 @@ export const useBookingsApi = (options = {}) => {
    * Mutation for updating a booking
    */
   const updateBookingMutation = useMutation({
-    mutationFn: async ({ bookingId, bookingData }) => {
+    mutationFn: ({ bookingId, bookingData }) => {
       // Verify that we have all required fields for the booking update
       if (!bookingData.startDate || !bookingData.endDate) {
         throw new Error("Missing required booking data");
       }
 
-      // Ensure both property names are set for consistency
-      const normalizedBookingData = {
-        ...bookingData,
-        // Set both properties to the same value to handle backend inconsistency
-        isPending:
-          bookingData.pending !== undefined
-            ? bookingData.pending
-            : bookingData.isPending,
-        pending:
-          bookingData.isPending !== undefined
-            ? bookingData.isPending
-            : bookingData.pending,
-      };
-
-      const response = await api.patch(
-        `/bookings/${bookingId}`,
-        normalizedBookingData
-      );
-      return response.data;
+      return updateBookingStatus(bookingId, bookingData);
     },
     onSuccess: (data, variables) => {
       // Invalidate relevant queries
@@ -178,43 +204,6 @@ export const useBookingsApi = (options = {}) => {
     },
   });
 
-  /**
-   * Get a specific booking by ID
-   */
-  const useBookingById = (bookingId) => {
-    return useQuery({
-      queryKey: ["booking", bookingId],
-      queryFn: async () => {
-        if (!bookingId) {
-          throw new Error("Booking ID is required");
-        }
-
-        const response = await api.get(`/bookings/${bookingId}`);
-        return response.data;
-      },
-      enabled: enabled && Boolean(bookingId),
-    });
-  };
-
-  /**
-   * Hook for fetching bookings for a specific listing
-   */
-  const useListingBookings = (listingId) => {
-    return useQuery({
-      queryKey: ["listings", listingId, "bookings"],
-      queryFn: async () => {
-        if (!listingId) {
-          throw new Error("Listing ID is required");
-        }
-        const response = await api.get(
-          `/bookings/listings/${listingId}/bookings`
-        );
-        return response.data;
-      },
-      enabled: Boolean(listingId),
-    });
-  };
-
   // Determine which hook to use based on options
   let hookResult;
 
@@ -233,10 +222,7 @@ export const useBookingsApi = (options = {}) => {
 
           return queryClient.fetchQuery({
             queryKey: ["bookings", "user", userId],
-            queryFn: async () => {
-              const response = await api.get(`/bookings/user/${userId}`);
-              return response.data;
-            },
+            queryFn: () => getUserBookings(userId),
           });
         },
         [queryClient]
@@ -257,10 +243,7 @@ export const useBookingsApi = (options = {}) => {
 
           return queryClient.fetchQuery({
             queryKey: ["bookings", "host", hostId],
-            queryFn: async () => {
-              const response = await api.get(`/bookings/host/${hostId}`);
-              return response.data;
-            },
+            queryFn: () => getHostBookings(hostId),
           });
         },
         [queryClient]
@@ -295,10 +278,7 @@ export const useBookingsApi = (options = {}) => {
 
         return queryClient.fetchQuery({
           queryKey: ["bookings", "user", userId],
-          queryFn: async () => {
-            const response = await api.get(`/bookings/user/${userId}`);
-            return response.data;
-          },
+          queryFn: () => getUserBookings(userId),
         });
       },
       [queryClient]
@@ -309,10 +289,7 @@ export const useBookingsApi = (options = {}) => {
 
         return queryClient.fetchQuery({
           queryKey: ["bookings", "host", hostId],
-          queryFn: async () => {
-            const response = await api.get(`/bookings/host/${hostId}`);
-            return response.data;
-          },
+          queryFn: () => getHostBookings(hostId),
         });
       },
       [queryClient]
@@ -325,22 +302,7 @@ export const useBookingsApi = (options = {}) => {
 
       return queryClient.fetchQuery({
         queryKey: ["listings", listingId, "bookings"],
-        queryFn: async () => {
-          try {
-            const response = await api.get(
-              `/bookings/listings/${listingId}/bookings`
-            );
-            return response.data;
-          } catch (err) {
-            if (
-              err.response &&
-              (err.response.status === 403 || err.response.status === 404)
-            ) {
-              return [];
-            }
-            throw err;
-          }
-        },
+        queryFn: () => getListingBookings(listingId),
       });
     },
     [queryClient]
