@@ -17,14 +17,14 @@ import { AUTH_ACTIONS } from "./authTypes";
  */
 export const checkAuthStatus = async (dispatch) => {
   try {
-    console.log("Checking authentication status...");
+    /*console.log("Checking authentication status...");*/
     const response = await api.get("/auth/check");
-    console.log("Auth check successful:", response.data);
+    /*console.log("Auth check successful:", response.data);*/
 
     // Ensure we have a user ID from the response
     const userId =
       response.data.id || response.data.userId || response.data._id;
-    console.log("User ID from auth check:", userId);
+    /*console.log("User ID from auth check:", userId);*/
 
     if (!userId) {
       console.warn("No user ID found in auth response:", response.data);
