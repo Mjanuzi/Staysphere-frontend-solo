@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useListingsApi } from "../hooks/useListingsApi";
+import { useBookingsApi } from "../hooks/useBookingsApi";
+import { format } from "date-fns";
 
 import "./Profile.css";
 
@@ -17,24 +19,63 @@ const Profile = () => {
     isDeleting,
     error: listingsError,
   } = useListingsApi(false);
+
+  // Bookings API hook setup - minimal for handling pending bookings
+  const { fetchListingBookings, updateBooking, isUpdating } = useBookingsApi({
+    enabled: false,
+    type: "none",
+  });
+
   // Local state for listings and delete modal
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [listingToDelete, setListingToDelete] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
 
-  // Fetch user's bookings and listings when component mounts
+  // Simplified bookings management state
+  const [listingBookingCounts, setListingBookingCounts] = useState({});
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [bookingToUpdate, setBookingToUpdate] = useState(null);
+  const [updateError, setUpdateError] = useState(null);
+
+  // Fetch user's listings when component mounts
   useEffect(() => {
     if (currentUser && userId) {
       // For listings, we need to use the userId (which is the hostId for listings)
       getHostListings(userId).then((data) => {
         if (Array.isArray(data)) {
           setUserListings(data);
+
+          // For each listing, fetch and count pending bookings
+          data.forEach((listing) => {
+            fetchListingBookings(listing.listingId)
+              .then((bookings) => {
+                if (Array.isArray(bookings)) {
+                  // Check both pending and isPending properties
+                  const pendingCount = bookings.filter(
+                    (b) => b.pending === true || b.isPending === true
+                  ).length;
+                  setListingBookingCounts((prev) => ({
+                    ...prev,
+                    [listing.listingId]: {
+                      pending: pendingCount,
+                      total: bookings.length,
+                    },
+                  }));
+                }
+              })
+              .catch((err) =>
+                console.error(
+                  `Error fetching bookings for listing ${listing.listingId}:`,
+                  err
+                )
+              );
+          });
         }
       });
 
       console.log("Fetching listings for user ID:", userId);
     }
-  }, [currentUser, userId, getHostListings]);
+  }, [currentUser, userId, getHostListings, fetchListingBookings]);
 
   // Helper to set user listings from the hook response
   const [userListingsState, setUserListings] = useState([]);
@@ -55,6 +96,11 @@ const Profile = () => {
   const navigateToAddAvailability = (e, listingId) => {
     e.stopPropagation(); // Prevent click from bubbling to the parent
     navigate(`/add-availability/${listingId}`);
+  };
+
+  const navigateToManageBookings = (e, listingId) => {
+    e.stopPropagation(); // Prevent click from bubbling to the parent
+    navigate(`/manage-bookings/${listingId}`);
   };
 
   const handleLogout = async () => {
@@ -99,6 +145,7 @@ const Profile = () => {
     setListingToDelete(null);
     setDeleteError(null);
   };
+
   // Handle loading state
   if (loading) {
     return <div className="loading-state">Loading profile...</div>;
@@ -178,54 +225,79 @@ const Profile = () => {
           <div className="loading-state">Loading listings...</div>
         ) : userListingsState.length > 0 ? (
           <div className="listings-list">
-            {userListingsState.map((listing) => (
-              <div
-                key={listing.listingId || Math.random()}
-                className="listing-item"
-                onClick={() => navigateToDetail(listing.listingId)}
-              >
-                <h3>{listing.listingTitle || "Unnamed Listing"}</h3>
-                <div className="listing-details">
-                  <p>
-                    <strong>Location:</strong>{" "}
-                    {listing.location || "Unknown location"}
-                  </p>
-                  <p>
-                    <strong>Price:</strong> $
-                    {listing.listingPricePerNight?.toFixed(2) || "N/A"} per
-                    night
-                  </p>
-                  <p>
-                    <strong>Status:</strong> {listing.listingStatus || "Active"}
-                  </p>
+            {userListingsState.map((listing) => {
+              const listingId = listing.listingId;
+              const bookingCount = listingBookingCounts[listingId] || {
+                pending: 0,
+                total: 0,
+              };
+              const hasPendingBookings = bookingCount.pending > 0;
+
+              return (
+                <div
+                  key={listingId || Math.random()}
+                  className="listing-item"
+                  onClick={() => navigateToDetail(listingId)}
+                >
+                  <h3>{listing.listingTitle || "Unnamed Listing"}</h3>
+                  <div className="listing-details">
+                    <p>
+                      <strong>Location:</strong>{" "}
+                      {listing.location || "Unknown location"}
+                    </p>
+                    <p>
+                      <strong>Price:</strong> $
+                      {listing.listingPricePerNight?.toFixed(2) || "N/A"} per
+                      night
+                    </p>
+                    <p>
+                      <strong>Status:</strong>{" "}
+                      {listing.listingStatus || "Active"}
+                    </p>
+                    {hasPendingBookings && (
+                      <p className="pending-bookings-notice">
+                        <span className="pending-count">
+                          {bookingCount.pending}
+                        </span>{" "}
+                        pending
+                        {bookingCount.pending === 1
+                          ? " booking"
+                          : " bookings"}{" "}
+                        to review
+                      </p>
+                    )}
+                  </div>
+                  <div className="listing-actions">
+                    <button
+                      className="action-button update-button"
+                      onClick={(e) => navigateToUpdateListing(e, listingId)}
+                    >
+                      Update
+                    </button>
+                    <button
+                      className="action-button availability-button"
+                      onClick={(e) => navigateToAddAvailability(e, listingId)}
+                    >
+                      Add Availability
+                    </button>
+                    <button
+                      className="action-button manage-bookings-button"
+                      onClick={(e) => navigateToManageBookings(e, listingId)}
+                    >
+                      Manage Bookings{" "}
+                      {hasPendingBookings && `(${bookingCount.pending})`}
+                    </button>
+                    <button
+                      className="action-button delete-button"
+                      onClick={(e) => handleDeleteClick(e, listingId)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <div className="view-listing-badge">View Details</div>
                 </div>
-                <div className="listing-actions">
-                  <button
-                    className="action-button update-button"
-                    onClick={(e) =>
-                      navigateToUpdateListing(e, listing.listingId)
-                    }
-                  >
-                    Update
-                  </button>
-                  <button
-                    className="action-button availability-button"
-                    onClick={(e) =>
-                      navigateToAddAvailability(e, listing.listingId)
-                    }
-                  >
-                    Add Availability
-                  </button>
-                  <button
-                    className="action-button delete-button"
-                    onClick={(e) => handleDeleteClick(e, listing.listingId)}
-                  >
-                    Delete
-                  </button>
-                </div>
-                <div className="view-listing-badge">View Details</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="no-items-container">

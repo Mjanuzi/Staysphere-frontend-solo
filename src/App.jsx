@@ -13,6 +13,7 @@ import Layout from "./components/layout/Layout";
 import UpdateListing from "./pages/UpdateListing";
 import CreateListing from "./pages/CreateListing";
 import AddAvailability from "./pages/AddAvailability";
+import BookingManagement from "./pages/BookingManagement";
 
 function App() {
   return (
@@ -39,6 +40,10 @@ function App() {
               <Route
                 path="/add-availability/:listingId"
                 element={<AddAvailability />}
+              />
+              <Route
+                path="/manage-bookings/:listingId"
+                element={<BookingManagement />}
               />
             </Route>
 
