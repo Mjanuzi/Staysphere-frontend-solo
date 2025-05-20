@@ -158,6 +158,17 @@ hr {
   display: flex;
   margin-bottom: 5px;
 }
+.review-date {
+  font-size: 12px;
+  color: #767676;
+  margin: 0;
+}
+
+.review-comment {
+  font-size: 15px;
+  line-height: 1.4;
+  margin: 0;
+}
 .amenities-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

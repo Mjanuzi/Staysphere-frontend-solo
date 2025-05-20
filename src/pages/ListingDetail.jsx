@@ -234,7 +234,10 @@ const ListingDetail = () => {
     } catch (err) {
       console.error("Booking error:", err);
     }
+  };
 
+  useEffect(() => {
+    // Set mock reviews on mount or after listing loads
     setReviews([
       {
         id: 1,
@@ -255,7 +258,7 @@ const ListingDetail = () => {
         avatar: "https://randomuser.me/api/portraits/men/32.jpg",
       },
     ]);
-  };
+  }, []);
 
   if (listingLoading) {
     return <div className="loading-state">Loading listing details...</div>;
@@ -377,6 +380,46 @@ const ListingDetail = () => {
             className="location-map"
           />
         </div>
+      </div>
+
+      <hr />
+
+      <div className="listing-reviews">
+        <h2>Reviews</h2>
+        {reviews.length > 0 ? (
+          <div className="reviews-container">
+            {reviews.map((review) => (
+              <div key={review.id} className="review-item">
+                <div className="review-header">
+                  <img
+                    src={review.avatar}
+                    alt={review.username}
+                    className="reviewer-avatar"
+                  />
+                  <div className="review-meta">
+                    <h3>{review.username}</h3>
+                    <div className="review-rating">
+                      {[...Array(5)].map((_, i) => (
+                        <span
+                          key={i}
+                          className={i < review.rating ? "star filled" : "star"}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                    <p className="review-date">
+                      {new Date(review.date).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <p className="review-comment">{review.comment}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>No reviews yet for this listing.</p>
+        )}
       </div>
 
       <hr />
