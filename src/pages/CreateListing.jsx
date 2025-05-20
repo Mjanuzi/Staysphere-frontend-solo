@@ -22,6 +22,7 @@ const CreateListing = () => {
     listingPricePerNight: "",
     guestLimit: 1,
     listingImages: [],
+    location: "",
   });
 
   // Image URLs state for tracking multiple image URLs
@@ -192,6 +193,18 @@ const CreateListing = () => {
             placeholder="Describe your property, amenities, and surrounding area"
             required
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="location">Location *</label>
+          <input type="text"
+           id="location"
+           name="location"
+           value={formData.location}
+           onChange={handleChange}
+           placeholder="Enter the location (e.g. Stockholm, Sweden)"
+           required
+           />
         </div>
 
         <div className="form-group">
