@@ -256,6 +256,26 @@
   font-size: 1.1em;
 }
 
+/* Listing Status Styles */
+.listing-status {
+  display: inline-block;
+  font-weight: 600;
+  padding: 0.2em 0.8em;
+  border-radius: 1em;
+  font-size: 0.9em;
+  margin-left: 0.5em;
+}
+.listing-status.active {
+  background: #e8f5e9;
+  color: #388e3c;
+  border: 1px solid #388e3c;
+}
+.listing-status.inactive {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #c62828;
+}
+
 /* Tablet breakpoint (768px) */
 @media (min-width: 768px) {
   .profile-container h1 {
