@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useListingsApi } from "../hooks/useListingsApi";
 import { useBookingsApi } from "../hooks/useBookingsApi";
-import { format } from "date-fns";
 
 import "./Profile.css";
 
@@ -12,16 +11,18 @@ const Profile = () => {
   const navigate = useNavigate();
 
   const {
-    listings: userListings,
-    loading: listingsLoading,
     getHostListings,
     deleteListing,
     isDeleting,
     error: listingsError,
   } = useListingsApi(false);
 
+  // State for user listings and loading state
+  const [userListings, setUserListings] = useState([]);
+  const [listingsLoading, setListingsLoading] = useState(true);
+
   // Bookings API hook setup - minimal for handling pending bookings
-  const { fetchListingBookings, updateBooking, isUpdating } = useBookingsApi({
+  const { fetchListingBookings } = useBookingsApi({
     enabled: false,
     type: "none",
   });
@@ -33,52 +34,54 @@ const Profile = () => {
 
   // Simplified bookings management state
   const [listingBookingCounts, setListingBookingCounts] = useState({});
-  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
-  const [bookingToUpdate, setBookingToUpdate] = useState(null);
-  const [updateError, setUpdateError] = useState(null);
 
   // Fetch user's listings when component mounts
   useEffect(() => {
     if (currentUser && userId) {
-      // For listings, we need to use the userId (which is the hostId for listings)
-      getHostListings(userId).then((data) => {
-        if (Array.isArray(data)) {
-          setUserListings(data);
+      setListingsLoading(true);
 
-          // For each listing, fetch and count pending bookings
-          data.forEach((listing) => {
-            fetchListingBookings(listing.listingId)
-              .then((bookings) => {
-                if (Array.isArray(bookings)) {
-                  // Check both pending and isPending properties
-                  const pendingCount = bookings.filter(
-                    (b) => b.pending === true || b.isPending === true
-                  ).length;
-                  setListingBookingCounts((prev) => ({
-                    ...prev,
-                    [listing.listingId]: {
-                      pending: pendingCount,
-                      total: bookings.length,
-                    },
-                  }));
-                }
-              })
-              .catch((err) =>
-                console.error(
-                  `Error fetching bookings for listing ${listing.listingId}:`,
-                  err
-                )
-              );
-          });
-        }
-      });
+      // Fetch listings for the current user only
+      getHostListings(userId)
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setUserListings(data);
+
+            // For each listing, fetch and count pending bookings
+            data.forEach((listing) => {
+              fetchListingBookings(listing.listingId)
+                .then((bookings) => {
+                  if (Array.isArray(bookings)) {
+                    // Check both pending and isPending properties
+                    const pendingCount = bookings.filter(
+                      (b) => b.pending === true || b.isPending === true
+                    ).length;
+                    setListingBookingCounts((prev) => ({
+                      ...prev,
+                      [listing.listingId]: {
+                        pending: pendingCount,
+                        total: bookings.length,
+                      },
+                    }));
+                  }
+                })
+                .catch((err) =>
+                  console.error(
+                    `Error fetching bookings for listing ${listing.listingId}:`,
+                    err
+                  )
+                );
+            });
+          }
+          setListingsLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching user listings:", error);
+          setListingsLoading(false);
+        });
 
       console.log("Fetching listings for user ID:", userId);
     }
   }, [currentUser, userId, getHostListings, fetchListingBookings]);
-
-  // Helper to set user listings from the hook response
-  const [userListingsState, setUserListings] = useState([]);
 
   const navigateToDetail = (listingId) => {
     navigate(`/listings/${listingId}`);
@@ -126,9 +129,14 @@ const Profile = () => {
     }
     try {
       await deleteListing(listingToDelete);
-      setUserListings((prev) =>
-        prev.filter((l) => l.listingId !== listingToDelete)
+
+      // Update local state by filtering out the deleted listing
+      setUserListings((currentListings) =>
+        currentListings.filter(
+          (listing) => listing.listingId !== listingToDelete
+        )
       );
+
       setShowDeleteConfirm(false);
       setListingToDelete(null);
       setDeleteError(null);
@@ -223,9 +231,27 @@ const Profile = () => {
 
         {listingsLoading ? (
           <div className="loading-state">Loading listings...</div>
-        ) : userListingsState.length > 0 ? (
+        ) : listingsError ? (
+          <div className="error-state">
+            <p>Error loading listings: {listingsError}</p>
+            <button
+              className="retry-button"
+              onClick={() => {
+                setListingsLoading(true);
+                getHostListings(userId)
+                  .then((data) => {
+                    setUserListings(Array.isArray(data) ? data : []);
+                    setListingsLoading(false);
+                  })
+                  .catch(() => setListingsLoading(false));
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        ) : userListings.length > 0 ? (
           <div className="listings-list">
-            {userListingsState.map((listing) => {
+            {userListings.map((listing) => {
               const listingId = listing.listingId;
               const bookingCount = listingBookingCounts[listingId] || {
                 pending: 0,
