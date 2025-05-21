@@ -13,29 +13,12 @@ const Home = () => {
 
   // Helper function to generate image URL based on the listing
   const getImageUrl = (listing) => {
-    // In a real application, this would use the actual image URL from the listing
-    // For now, use placeholder images based on the location
-    if (!listing)
-      return "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=500&auto=format&fit=crop";
-
-    const location = String(listing.location || "").toLowerCase();
-
-    if (location.includes("stockholm")) {
-      return "https://images.unsplash.com/photo-1504512485720-7d83a16ee930?q=80&w=500&auto=format&fit=crop";
-    } else if (location.includes("barcelona")) {
-      return "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?q=80&w=500&auto=format&fit=crop";
-    } else if (location.includes("bali")) {
-      return "https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=500&auto=format&fit=crop";
-    } else if (
-      location.includes("new york") ||
-      location.includes("manhattan")
-    ) {
-      return "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?q=80&w=500&auto=format&fit=crop";
-    } else if (location.includes("tulum")) {
-      return "https://images.unsplash.com/photo-1470770903676-69b98201ea1c?q=80&w=500&auto=format&fit=crop";
-    } else {
-      return "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=500&auto=format&fit=crop";
+    // Use the first image from the listingImages array if available
+    if (listing && listing.listingImages && listing.listingImages.length > 0) {
+      return listing.listingImages[0];
     }
+    // Fallback to a default image if none are provided
+    return "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=500&auto=format&fit=crop";
   };
 
   const handleRefresh = () => {
