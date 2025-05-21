@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useListingsApi } from "../hooks/useListingsApi";
 import { useBookingsApi } from "../hooks/useBookingsApi";
 import DatePicker from "../components/DatePicker";
-import { format, addDays, subDays } from "date-fns";
+import { format, subDays } from "date-fns";
 
 import "./ListingDetail.css";
 
@@ -107,10 +107,11 @@ const ListingDetail = () => {
     createBooking,
     isCreating: bookingLoading,
     error: bookingError,
+    setError: setBookingError,
   } = useBookingsApi({ enabled: true });
 
   // Get listing data using React Query
-  const { data: listing } = useListingById(listingId);
+  const { data: listing, refetch: refetchListing } = useListingById(listingId);
 
   // Core state
   const [selectedDates, setSelectedDates] = useState([]);
@@ -198,41 +199,74 @@ const ListingDetail = () => {
     [availableDateStrings]
   );
 
+  // Post-booking refresh logic
+  useEffect(() => {
+    const justBooked = sessionStorage.getItem("justBooked");
+    const bookedListingId = sessionStorage.getItem("bookedListingId");
+
+    if (justBooked === "true" && bookedListingId === listingId) {
+      sessionStorage.removeItem("justBooked");
+      sessionStorage.removeItem("bookedListingId");
+      refetchListing();
+    }
+  }, [listingId, refetchListing]);
+
+
   // Handle booking creation
   const handleBooking = async () => {
-    if (!currentUser || !userId) {
-      return;
-    }
-
-    if (selectedDates.length !== 2 || !selectedDates[0] || !selectedDates[1]) {
-      return;
-    }
-
-    if (numberOfNights <= 0) {
-      return;
-    }
+    if (!currentUser || !userId) return;
 
     try {
+      // Validate selection
+      if (selectedDates.length !== 2 || !selectedDates[0] || !selectedDates[1]) {
+        throw new Error("Please select valid check-in and check-out dates");
+      }
+
+      // Date formatting and validation
+      const startDate = new Date(selectedDates[0]);
+      const endDate = new Date(selectedDates[1]);
+      startDate.setHours(12, 0, 0, 0);
+      endDate.setHours(12, 0, 0, 0);
+
+      // Generate booked dates array
+      const bookedDatesArray = [];
+      const currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        bookedDatesArray.push(format(currentDate, "yyyy-MM-dd"));
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // User ID handling
+      const userIdForBooking = currentUser?.id || currentUser?._id || userId;
+
+      // Complete booking payload
       const bookingData = {
+        userId: userIdForBooking,
         listingId,
-        checkIn: format(selectedDates[0], "yyyy-MM-dd"),
-        checkOut: format(selectedDates[1], "yyyy-MM-dd"),
-        numberOfNights,
-        totalPrice,
-        userId: currentUser.username, // Add user information
+        bookingDate: new Date().toISOString(),
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        bookedDates: bookedDatesArray,
+        totalCost: totalPrice,
+        status: false,
+        pending: true,
+        bookingName: `${listing.listingTitle} (${format(startDate, "MMM d")} - ${format(endDate, "MMM d")})`,
       };
 
-      await createBooking(bookingData);
-      setBookingSuccess(true);
+      console.log("Submitting booking data:", bookingData);
 
-      // Reset form after successful booking
-      setTimeout(() => {
-        setBookingSuccess(false);
-        setSelectedDates([]);
-        navigate("/profile"); // Navigate to profile page after booking
-      }, 2000);
+      await createBooking(bookingData);
+      
+      // Post-booking actions
+      setBookingSuccess(true);
+      setSelectedDates([]);
+      setNumberOfNights(0);
+      setTotalPrice(0);
+      navigate("/profile");
+      
     } catch (err) {
       console.error("Booking error:", err);
+      setBookingError(err.response?.data || err.message || "Booking failed");
     }
   };
 
