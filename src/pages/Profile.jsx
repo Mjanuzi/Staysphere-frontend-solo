@@ -278,8 +278,19 @@ const Profile = () => {
                     </p>
                     <p>
                       <strong>Status:</strong>{" "}
-                      {listing.listingStatus || "Active"}
+                      <span
+                        className={`listing-status ${
+                          listing.listingActive === false
+                            ? "inactive"
+                            : "active"
+                        }`}
+                      >
+                        {listing.listingActive === false
+                          ? "Inactive"
+                          : "Active"}
+                      </span>
                     </p>
+                    
                     {hasPendingBookings && (
                       <p className="pending-bookings-notice">
                         <span className="pending-count">

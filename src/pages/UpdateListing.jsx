@@ -29,6 +29,7 @@ const UpdateListing = () => {
     guestLimit: 1,
     listingImages: [],
     location: "",
+    listingActive: true,
   });
 
   // Image URLs state for tracking multiple image URLs
@@ -51,6 +52,7 @@ const UpdateListing = () => {
           guestLimit: listingData.guestLimit,
           listingImages: listingData.listingImages || [],
           location: listingData.location || "",
+          listingActive: listingData.listingActive ?? true,
         });
       } catch (error) {
         console.error("Error fetching listing:", error);
@@ -294,6 +296,27 @@ const UpdateListing = () => {
               </ul>
             </div>
           )}
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="listingActive" className="toggle-label">
+            <span>Listing Status</span>
+            <div className="toggle-switch">
+              <input
+                type="checkbox"
+                id="listingActive"
+                name="listingActive"
+                checked={formData.listingActive}
+                onChange={(e) =>
+                  setFormData({ ...formData, listingActive: e.target.checked })
+                }
+              />
+              <span className="toggle-slider"></span>
+            </div>
+            <span className="status-text">
+              {formData.listingActive ? "Active" : "Inactive"}
+            </span>
+          </label>
         </div>
 
         <div className="form-actions">
