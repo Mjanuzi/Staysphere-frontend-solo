@@ -29,6 +29,7 @@ const UpdateListing = () => {
     guestLimit: 1,
     listingImages: [],
     location: "",
+    listingActive: true,
   });
 
   // Image URLs state for tracking multiple image URLs
@@ -51,6 +52,7 @@ const UpdateListing = () => {
           guestLimit: listingData.guestLimit,
           listingImages: listingData.listingImages || [],
           location: listingData.location || "",
+          listingActive: listingData.listingActive ?? true,
         });
       } catch (error) {
         console.error("Error fetching listing:", error);
