@@ -298,6 +298,27 @@ const UpdateListing = () => {
           )}
         </div>
 
+        <div className="form-group">
+          <label htmlFor="listingActive" className="toggle-label">
+            <span>Listing Status</span>
+            <div className="toggle-switch">
+              <input
+                type="checkbox"
+                id="listingActive"
+                name="listingActive"
+                checked={formData.listingActive}
+                onChange={(e) =>
+                  setFormData({ ...formData, listingActive: e.target.checked })
+                }
+              />
+              <span className="toggle-slider"></span>
+            </div>
+            <span className="status-text">
+              {formData.listingActive ? "Active" : "Inactive"}
+            </span>
+          </label>
+        </div>
+
         <div className="form-actions">
           <button
             type="button"
