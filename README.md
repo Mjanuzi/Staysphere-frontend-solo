@@ -1,78 +1,91 @@
 # StaySphere Frontend
 
-Detta är frontend-klienten för StaySphere – en bokningsplattform där värdar kan skapa och hantera boenden och gäster kan söka, boka och lämna omdömen. Backend-API:t finns i ett separat repo: **Staysphere-backend-solo**.
+This is the frontend client for StaySphere—a booking platform where hosts can create/manage listings and guests can browse, book, and leave reviews. The backend API lives in a separate repo: **Staysphere-backend-solo**.
 
-## Funktioner
-- Offentliga sidor: startsida med utvalda objekt, listvy med oändlig scroll och detaljsida med datumväljare.
-- Autentisering med cookie-baserad session (login, register, logout) och rollskyddade rutter (t.ex. admin).
-- Värdflöde: skapa/redigera/inaktivera annonser, lägga till tillgänglighet och radera egna annonser.
-- Bokningar: gäster reserverar datum; värdar kan godkänna eller avvisa bokningsförfrågningar per annons.
-- Profil: översikt av konto, egna annonser och antal väntande bokningar.
-- Grundläggande admin-dashboard (redo att byggas ut).
+## Features
 
-## Teknisk stack
+- Public pages: home with featured listings, listings page with infinite scroll, and listing detail with date picker.
+- Authentication with cookie-based sessions (login, register, logout) and role-protected routes (e.g., admin).
+- Host flows: create/edit/deactivate listings, add availability, and delete own listings.
+- Bookings: guests reserve dates; hosts can approve/deny booking requests per listing.
+- Profile: account overview, own listings, and pending booking counts.
+- Basic admin dashboard (ready to extend).
+
+## Tech Stack
+
 - React + Vite
 - React Router v7
-- @tanstack/react-query för datahämtning/caching
-- Axios med centraliserad instans (`src/api/axios.js`)
+- @tanstack/react-query for data fetching/caching
+- Axios with a centralized instance (`src/api/axios.js`)
 - date-fns, react-datepicker, react-infinite-scroll-component
-- ESLint för kodkvalitet
+- ESLint for code quality
 
-## Kom igång
-### Förutsättningar
-- Node.js 18+ och npm
-- Backend igång från `Staysphere-backend-solo` (se repo-instruktioner)
+## Getting Started
 
-### Installation & körning
+### Prerequisites
+
+- Node.js 18+ and npm
+- Backend running from `Staysphere-backend-solo` (see that repo)
+
+### Install & run
+
 ```bash
-# klona frontend
-git clone https://github.com/<ditt-konto>/StaySphere-Frontend.git
+# clone frontend
+git clone https://github.com/<your-account>/StaySphere-Frontend.git
 cd StaySphere-Frontend
 
 npm install
 
-# starta dev-server (http://localhost:5173)
+# start dev server (http://localhost:5173)
 npm run dev
 ```
 
-### Miljövariabler
-Skapa `.env.local` i projektroten:
+### Environment variables
+
+Create `.env.local` in the project root:
+
 ```
 VITE_API_URL=http://localhost:8080
 ```
-- Peka `VITE_API_URL` mot backend-bas-URL:en. Axios skickar cookies (`withCredentials: true`) för sessioner.
 
-### Nyttiga npm-skript
-- `npm run dev` – starta Vite dev-server med HMR.
-- `npm run build` – produktionsbuild.
-- `npm run preview` – förhandsgranska byggd bundle.
-- `npm run lint` – kör ESLint.
+- Point `VITE_API_URL` to your backend base URL. Axios sends cookies (`withCredentials: true`) for sessions.
 
-## Struktur (kortfattat)
-- `src/App.jsx` – routing och routeskydd.
-- `src/contexts/auth/` – auth-state, reducer och actions mot `/auth/*`.
-- `src/api/` – Axios-instans och tjänster för listings, bookings och reviews.
-- `src/pages/` – sidor (Home, Listings, ListingDetail, Profile, Create/Update Listing, AddAvailability, BookingManagement m.fl.).
-- `src/hooks/` – React Query-baserade hooks för listings/bookings/auth.
-- `src/components/` – layout (Header/Footer), DatePicker, ProtectedRoute m.m.
+### Useful npm scripts
 
-## Koppla mot backend
-1) Starta backend-projektet `Staysphere-backend-solo` (t.ex. `mvn spring-boot:run` eller enligt repo-instruktionen).  
-2) Säkerställ att backend körs på samma domän/port som `VITE_API_URL` i `.env.local`.  
-3) Dev-servern måste få skicka cookies: behåll `withCredentials: true` i `src/api/axios.js` och se till att CORS i backend tillåter detta.
+- `npm run dev` – start Vite dev server with HMR.
+- `npm run build` – production build.
+- `npm run preview` – preview the built bundle.
+- `npm run lint` – run ESLint.
 
-## Flöden att känna till
-- **Registrering/Inloggning**: POST mot `/auth/register` respektive `/auth/login`. `checkAuthStatus` mot `/auth/check` håller sessionen uppdaterad.
-- **Listings**: CRUD på `/api/listing/*`; värdar hanterar sina egna annonser och tillgänglighet.
-- **Bokningar**: gäster skapar bokning via `/api/bookings`; värdar godkänner/avvisar via `BookingManagement`.
-- **Roller**: `ProtectedRoute` kan kräva `requiredRoles` (t.ex. `ADMIN`) och omdirigerar till `/unauthorized` vid saknade rättigheter.
+## Project Structure (short)
 
-## Testdata och bilder
-- Annonsbilder anges som URL:er i formulären (ingen filuppladdning i frontend).  
-- Om inga bilder finns används en fallback-bild i list- och detaljvyer.
+- `src/App.jsx` – routing and route protection.
+- `src/contexts/auth/` – auth state, reducer, and actions hitting `/auth/*`.
+- `src/api/` – Axios instance and services for listings, bookings, and reviews.
+- `src/pages/` – pages (Home, Listings, ListingDetail, Profile, Create/Update Listing, AddAvailability, BookingManagement, etc.).
+- `src/hooks/` – React Query-based hooks for listings/bookings/auth.
+- `src/components/` – layout (Header/Footer), DatePicker, ProtectedRoute, etc.
 
-## Vidare utveckling
-- Bygg ut `AdminDashboard` med statistik och moderering.
-- Lägg till riktiga kartor och riktiga recensioner (API-stöd finns i `reviewService`).
-- Lägg till E2E- och enhetstester samt UI-förfining.
+## Connecting to the Backend
 
+1. Start `Staysphere-backend-solo` (e.g., `mvn spring-boot:run` or per its README).
+2. Ensure the backend runs on the same domain/port as `VITE_API_URL` in `.env.local`.
+3. The dev server must send cookies: keep `withCredentials: true` in `src/api/axios.js` and ensure backend CORS allows it.
+
+## Key Flows
+
+- **Register/Login**: POST to `/auth/register` and `/auth/login`. `checkAuthStatus` hits `/auth/check` to keep the session fresh.
+- **Listings**: CRUD via `/api/listing/*`; hosts manage their own listings and availability.
+- **Bookings**: guests create bookings via `/api/bookings`; hosts approve/deny via `BookingManagement`.
+- **Roles**: `ProtectedRoute` can require `requiredRoles` (e.g., `ADMIN`) and redirects to `/unauthorized` if missing.
+
+## Test Data & Images
+
+- Listing images are provided as URLs in forms (no file upload in the frontend).
+- If no images exist, a fallback image is shown in list/detail views.
+
+## Future Improvements
+
+- Expand `AdminDashboard` with stats and moderation tools.
+  -\ Lay in real maps and real reviews (API support exists in `reviewService`).
+- Add E2E/unit tests and UI polish.
